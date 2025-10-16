@@ -1,0 +1,80 @@
+{
+    "name": "ibexa/cloud",
+    "license": "proprietary",
+    "type": "ibexa-bundle",
+    "keywords": [
+        "ibexa-dxp"
+    ],
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://updates.ibexa.co"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.3",
+        "ibexa/core": "~5.0.x-dev",
+        "symfony/config": "^7.3",
+        "symfony/dependency-injection": "^7.3",
+        "symfony/event-dispatcher": "^7.3",
+        "symfony/http-foundation": "^7.3",
+        "symfony/http-kernel": "^7.3",
+        "symfony/yaml": "^7.3"
+    },
+    "require-dev": {
+        "dama/doctrine-test-bundle": "^8.2",
+        "deptrac/deptrac": "^3.0",
+        "ibexa/behat": "~5.0.x-dev",
+        "ibexa/code-style": "~2.1.0",
+        "ibexa/phpstan": "~5.0.x-dev",
+        "ibexa/rector": "~5.0.x-dev",
+        "ibexa/test-core": "~5.0.x-dev",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^9.5",
+        "symfony/phpunit-bridge": "^7.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ibexa\\Bundle\\Cloud\\": "src/bundle/",
+            "Ibexa\\Contracts\\Cloud\\": "src/contracts/",
+            "Ibexa\\Cloud\\": "src/lib/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ibexa\\Tests\\Bundle\\Cloud\\": "tests/bundle/",
+            "Ibexa\\Tests\\Integration\\Cloud\\": "tests/integration/",
+            "Ibexa\\Tests\\Cloud\\": "tests/lib/"
+        }
+    },
+    "scripts": {
+        "fix-cs": "php-cs-fixer fix --config=.php-cs-fixer.php --show-progress=dots",
+        "check-cs": "@fix-cs --dry-run",
+        "test": "phpunit -c phpunit.xml.dist",
+        "test-integration": "phpunit -c phpunit.integration.xml",
+        "phpstan": "phpstan analyse -c phpstan.neon",
+        "deptrac": "php vendor/bin/deptrac analyse"
+    },
+    "scripts-descriptions": {
+        "fix-cs": "Automatically fixes code style in all files",
+        "check-cs": "Run code style checker for all files",
+        "test": "Run automatic tests",
+        "test-integration": "Run integration tests",
+        "phpstan": "Run static code analysis",
+        "deptrac": "Run Deptrac architecture testing"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "5.0.x-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": false
+    }
+}

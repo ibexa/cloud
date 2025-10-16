@@ -1,0 +1,13 @@
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/ibexa/phpstan/extension.neon
+
+parameters:
+    level: 8
+    paths:
+        - src
+        - tests
+    checkMissingCallableSignature: true
+    treatPhpDocTypesAsCertain: false

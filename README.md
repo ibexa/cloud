@@ -1,10 +1,17 @@
-Ibexa DXP \<Package name\>
-====================
+# cloud
+
+This package is part of [Ibexa DXP](https://ibexa.co).
+
+To use this package, [install Ibexa DXP](https://doc.ibexa.co/en/latest/install/).
+
+<!-- This package contains the ... functionality for [Ibexa DXP](ibexa.co). -->
 
 ## COPYRIGHT
+
 Copyright (C) 1999-2025 Ibexa AS (formerly eZ Systems AS). All rights reserved.
 
 ## LICENSE
+
 This source code is available separately under the following licenses:
 
 A - Ibexa Business Use License Agreement (Ibexa BUL),
