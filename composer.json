@@ -56,7 +56,6 @@
         "fix-cs": "php-cs-fixer fix --config=.php-cs-fixer.php --show-progress=dots",
         "check-cs": "@fix-cs --dry-run",
         "test": "phpunit -c phpunit.xml.dist",
-        "test-integration": "phpunit -c phpunit.integration.xml",
         "phpstan": "phpstan analyse -c phpstan.neon",
         "deptrac": "php vendor/bin/deptrac analyse"
     },
@@ -64,7 +63,6 @@
         "fix-cs": "Automatically fixes code style in all files",
         "check-cs": "Run code style checker for all files",
         "test": "Run automatic tests",
-        "test-integration": "Run integration tests",
         "phpstan": "Run static code analysis",
         "deptrac": "Run Deptrac architecture testing"
     },
