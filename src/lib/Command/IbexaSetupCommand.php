@@ -61,9 +61,6 @@ final class IbexaSetupCommand extends Command
 
         $product = IbexaProductVersion::getInstalledProduct();
 
-        $product = 'ibexa/experience';
-        //dd('product', $product);
-
         $commonFiles = $this->getCommonFiles($product);
         $productSpecificFiles = $this->getProductSpecificFiles($product);
 
