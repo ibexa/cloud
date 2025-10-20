@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace Ibexa\Cloud\Command;
 
-use Composer\Command\BaseCommand;
 use Composer\InstalledVersions;
 use Composer\Semver\Semver;
 use Composer\Semver\VersionParser;
@@ -21,23 +20,17 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
-#[AsCommand(name: 'ibexa:setups', description: 'Runs post install configuration tool.')]
-final class IbexaSetupCommand extends BaseCommand
+#[AsCommand(name: 'ibexa:cloud:setup', description: 'Runs post install configuration tool.')]
+final class IbexaSetupCommand extends Command
 {
     private VersionParser $versionParser;
 
     private const string UPSUN_RESOURCES_PATH = __DIR__ . '/../../../resources/upsun';
-
-    private const array EDITION_FALLBACKS = [
-        'ibexa-commerce' => ['ibexa-commerce', 'ibexa-experience', 'ibexa-headless', 'ibexa-oss'],
-        'ibexa-experience' => ['ibexa-experience', 'ibexa-headless', 'ibexa-oss'],
-        'ibexa-headless' => ['ibexa-headless', 'ibexa-oss'],
-        'ibexa-oss' => ['ibexa-oss'],
-    ];
 
     protected function configure(): void
     {
@@ -54,17 +47,22 @@ final class IbexaSetupCommand extends BaseCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (!$input->getOption('upsun')) {
+        $io = new SymfonyStyle($input, $output);
+
+        if ($input->getOption('upsun') === false) {
+            $io->warning('No cloud provider was chosen.');
+
             return Command::SUCCESS;
         }
 
-        $this->getIO()->write('Installing Upsun config files...');
+        $io->info('Installing Upsun config files...');
 
         $fileSystem = new Filesystem();
 
         $product = IbexaProductVersion::getInstalledProduct();
 
-        dd($product);
+        $product = 'ibexa/experience';
+        //dd('product', $product);
 
         $commonFiles = $this->getCommonFiles($product);
         $productSpecificFiles = $this->getProductSpecificFiles($product);
@@ -77,48 +75,42 @@ final class IbexaSetupCommand extends BaseCommand
             true
         );
 
-        $output->writeln('Copying common files');
+        $io->info('Copying common files');
 
         $progressBar = new ProgressBar($output);
         $progressBar->start($commonFiles->count());
-        $this->printNewLine($output);
         foreach ($commonFiles as $file) {
             if ($fileSystem->exists($file->getRelativePathname())) {
-                $output->writeln(
+                $io->info(
                     sprintf("File '%s' exists and has been overwritten", $file->getRelativePathname()),
-                    OutputInterface::VERBOSITY_VERBOSE
                 );
             }
 
             $fileSystem->copy($file->getPathname(), $file->getRelativePathname(), true);
             $progressBar->advance();
-            $this->printNewLine($output);
         }
 
         $progressBar->finish();
-        $output->writeln("\nCopying product specific files");
+        $io->info('Copying product specific files');
 
         $progressBar->start(count($productSpecificFiles));
-        $this->printNewLine($output);
         foreach ($productSpecificFiles as $relativePathname => $file) {
             if (
                 !array_key_exists($relativePathname, $commonFilePathNames)
                 && $fileSystem->exists($relativePathname)
             ) {
-                $output->writeln(
+                $io->info(
                     sprintf("File '%s' exists and has been overwritten", $relativePathname),
-                    OutputInterface::VERBOSITY_VERBOSE
                 );
             }
 
             $fileSystem->copy($file->getPathname(), $relativePathname, true);
             $progressBar->advance();
-            $this->printNewLine($output);
         }
 
         $progressBar->finish();
 
-        $output->writeln("\nUpsun config files installed successfully");
+        $io->info('Upsun config files installed successfully');
 
         return Command::SUCCESS;
     }
@@ -148,8 +140,7 @@ final class IbexaSetupCommand extends BaseCommand
     protected function getProductSpecificFiles(string $product): array
     {
         $files = [];
-        $productDir = str_replace('/', '-', $product);
-        $fallbackDirectories = $this->getEditionFallbackDirectories($productDir);
+        $fallbackDirectories = $this->getEditionFallbackDirectories($product);
 
         foreach ($fallbackDirectories as $index => $fallbackDir) {
             $fallbackPath = self::UPSUN_RESOURCES_PATH . '/' . $fallbackDir;
@@ -270,8 +261,19 @@ final class IbexaSetupCommand extends BaseCommand
     /**
      * @return string[]
      */
-    private function getEditionFallbackDirectories(string $productDir): array
+    private function getEditionFallbackDirectories(string $product): array
     {
-        return self::EDITION_FALLBACKS[$productDir] ?? [$productDir];
+        $productIndex = array_search($product, IbexaProductVersion::IBEXA_PRODUCTS, true);
+
+        if ($productIndex === false) {
+            return [str_replace('/', '-', $product)];
+        }
+
+        $fallbacks = array_slice(IbexaProductVersion::IBEXA_PRODUCTS, $productIndex);
+
+        return array_map(
+            static fn (string $productName): string => str_replace('/', '-', $productName),
+            $fallbacks
+        );
     }
 }

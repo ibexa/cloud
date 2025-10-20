@@ -1,7 +1,7 @@
 {
     "name": "ibexa/cloud",
     "license": "proprietary",
-    "type": "composer-plugin",
+    "type": "ibexa-bundle",
     "keywords": [
         "ibexa-dxp"
     ],
@@ -15,7 +15,6 @@
     "prefer-stable": true,
     "require": {
         "php": ">=8.3",
-        "composer-plugin-api": "^2.0",
         "composer/semver": "^3.4",
         "ibexa/core": "~5.0.x-dev",
         "symfony/config": "^7.3",
@@ -26,7 +25,6 @@
         "symfony/yaml": "^7.3"
     },
     "require-dev": {
-        "composer/composer": "^2.8",
         "dama/doctrine-test-bundle": "^8.2",
         "deptrac/deptrac": "^3.0",
         "ibexa/behat": "~5.0.x-dev",
@@ -72,8 +70,7 @@
     "extra": {
         "branch-alias": {
             "dev-main": "5.0.x-dev"
-        },
-        "class": "Ibexa\\Cloud\\PostInstall"
+        }
     },
     "config": {
         "sort-packages": true,

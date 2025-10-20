@@ -28,10 +28,10 @@ final class IbexaProductVersion
             return strpos($packageName, 'ibexa/') !== false;
         });
 
-        // removes unrelated Ibexa packages
+        // Removes unrelated Ibexa packages
         $installedIbexaProducts = array_values(array_intersect($ibexaPackages, self::IBEXA_PRODUCTS));
 
-        // sorts $installedIbexaProducts according to the order of self::IBEXA_PRODUCTS
+        // Sorts $installedIbexaProducts according to the order of self::IBEXA_PRODUCTS
         $installedIbexaProducts = array_keys(
             array_filter(
                 array_replace(
@@ -41,8 +41,8 @@ final class IbexaProductVersion
             )
         );
 
-        // first element in the array is the package matching product edition
-        $installedProduct = reset($installedIbexaProducts);
+        // The first element in the array is the package matching product edition
+        $installedProduct = $installedIbexaProducts[(int)array_key_first($installedIbexaProducts)];
 
         if (!is_string($installedProduct)) {
             throw new RuntimeException(sprintf(
