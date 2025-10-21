@@ -13,43 +13,33 @@ use Composer\Semver\Semver;
 use Composer\Semver\VersionParser;
 use Exception;
 use Ibexa\Cloud\IbexaProductVersion;
+use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
 #[AsCommand(name: 'ibexa:cloud:setup', description: 'Runs post install configuration tool.')]
-final class IbexaSetupCommand extends Command
+final class IbexaSetupCommand
 {
     private VersionParser $versionParser;
 
     private const string UPSUN_RESOURCES_PATH = __DIR__ . '/../../../resources/upsun';
 
-    protected function configure(): void
-    {
-        $this->addOption(
-            'upsun',
-            null,
-            InputOption::VALUE_NONE,
-            'Install Upsun configuration files'
-        );
-    }
-
     /**
      * @throws \Exception
      */
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $io = new SymfonyStyle($input, $output);
-
-        if ($input->getOption('upsun') === false) {
+    public function __invoke(
+        SymfonyStyle $io,
+        #[Option(description: 'Install Upsun configuration files')]
+        bool $upsun = false,
+    ): int {
+        if ($upsun === false) {
             $io->warning('No cloud provider was chosen.');
 
             return Command::SUCCESS;
@@ -74,7 +64,7 @@ final class IbexaSetupCommand extends Command
 
         $io->info('Copying common files');
 
-        $progressBar = new ProgressBar($output);
+        $progressBar = new ProgressBar($io);
         $progressBar->start($commonFiles->count());
         foreach ($commonFiles as $file) {
             if ($fileSystem->exists($file->getRelativePathname())) {
@@ -115,7 +105,7 @@ final class IbexaSetupCommand extends Command
     /**
      * @throws \Exception
      */
-    protected function getCommonFiles(string $product): Finder
+    private function getCommonFiles(string $product): Finder
     {
         $versionDir = $this->getVersionDirectory($product, self::UPSUN_RESOURCES_PATH . '/common');
 
@@ -130,11 +120,11 @@ final class IbexaSetupCommand extends Command
     }
 
     /**
-     * @return array<string,SplFileInfo>
+     * @return array<string, SplFileInfo>
      *
      * @throws \Exception
      */
-    protected function getProductSpecificFiles(string $product): array
+    private function getProductSpecificFiles(string $product): array
     {
         $files = [];
         $fallbackDirectories = $this->getEditionFallbackDirectories($product);
@@ -174,11 +164,6 @@ final class IbexaSetupCommand extends Command
         return $files;
     }
 
-    protected function printNewLine(OutputInterface $output): void
-    {
-        $output->writeln('');
-    }
-
     private function getVersionDirectory(string $product, string $path): string
     {
         $finder = new Finder();
@@ -216,7 +201,6 @@ final class IbexaSetupCommand extends Command
 
         $normalizedAliases = array_map(function (string $alias): string {
             $normalizedAlias = $this->getVersionParser()->parseNumericAliasPrefix($alias);
-
             if ($normalizedAlias === false) {
                 throw new RuntimeException(sprintf('Unable to parse version. "%s" is invalid.', $alias));
             }
@@ -248,11 +232,7 @@ final class IbexaSetupCommand extends Command
 
     private function getVersionParser(): VersionParser
     {
-        if (!isset($this->versionParser)) {
-            $this->versionParser = new VersionParser();
-        }
-
-        return $this->versionParser;
+        return $this->versionParser ??= new VersionParser();
     }
 
     /**
