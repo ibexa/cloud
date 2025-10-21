@@ -13,7 +13,6 @@ use Composer\Semver\Semver;
 use Composer\Semver\VersionParser;
 use Exception;
 use Ibexa\Cloud\IbexaProductVersion;
-use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
