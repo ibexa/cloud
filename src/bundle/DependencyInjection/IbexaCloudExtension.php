@@ -38,6 +38,17 @@ final class IbexaCloudExtension extends Extension implements PrependExtensionInt
     {
         $this->prependDefaultConfiguration($container);
         $this->prependJMSTranslation($container);
+
+        if (($_SERVER['HTTPCACHE_PURGE_TYPE'] ?? $_ENV['HTTPCACHE_PURGE_TYPE'] ?? null) === 'varnish') {
+            $container->setParameter('ibexa.http_cache.purge_type', 'varnish');
+        }
+
+        // Adapt config based on enabled PHP extensions
+        // Get imagine to use imagick if enabled, to avoid using php memory for image conversions
+        // Cannot be placed as env var due to how LiipImagineBundle processes its config
+        if (\extension_loaded('imagick')) {
+            $container->setParameter('liip_imagine_driver', 'imagick');
+        }
     }
 
     private function prependDefaultConfiguration(ContainerBuilder $container): void
