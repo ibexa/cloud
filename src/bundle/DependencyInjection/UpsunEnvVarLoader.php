@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @copyright Copyright (C) Ibexa AS. All rights reserved.
+ * @license For full copyright and license information view LICENSE file distributed with this source code.
+ */
 declare(strict_types=1);
 
 namespace Ibexa\Bundle\Cloud\DependencyInjection;
@@ -26,7 +30,6 @@ final class UpsunEnvVarLoader implements EnvVarLoaderInterface
         }
 
         $relationships = $this->decodePayload($relationshipsEncoded);
-
         $routes = $this->decodePayload($routesEncoded);
 
         if ($relationships === null || $routes === null) {
@@ -67,7 +70,7 @@ final class UpsunEnvVarLoader implements EnvVarLoaderInterface
 
         if (isset($relationships['dfs_database'])) {
             foreach ($relationships['dfs_database'] as $endpoint) {
-                if (empty($endpoint['query']['is_master'])) {
+                if (!isset($endpoint['query']['is_master'])) {
                     continue;
                 }
 
@@ -131,7 +134,7 @@ final class UpsunEnvVarLoader implements EnvVarLoaderInterface
                     continue;
                 }
 
-                @trigger_error('Usage of Memcached is deprecated, redis is recommended', \E_USER_DEPRECATED);
+                @trigger_error('Usage of Memcached is deprecated, redis is recommended', E_USER_DEPRECATED);
 
                 return [
                     $this->envKey('cache_pool') => 'cache.memcached',
@@ -242,7 +245,9 @@ final class UpsunEnvVarLoader implements EnvVarLoaderInterface
             }
         }
 
-        if ($varnishRoute !== null && !($_SERVER['SKIP_HTTPCACHE_PURGE'] ?? false)) {
+        $skipHttpCachePurge = (bool) ($_SERVER['SKIP_HTTPCACHE_PURGE'] ?? false);
+
+        if ($varnishRoute !== null && $skipHttpCachePurge === false) {
             $purgeServer = rtrim($varnishRoute, '/');
             $username = $_SERVER['HTTPCACHE_USERNAME'] ?? null;
             $password = $_SERVER['HTTPCACHE_PASSWORD'] ?? null;
@@ -277,7 +282,6 @@ final class UpsunEnvVarLoader implements EnvVarLoaderInterface
         }
 
         try {
-            /** @var array<string, mixed> $data */
             return json_decode($decoded, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return null;
