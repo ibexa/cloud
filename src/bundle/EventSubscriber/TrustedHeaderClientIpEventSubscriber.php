@@ -25,7 +25,7 @@ final class TrustedHeaderClientIpEventSubscriber implements EventSubscriberInter
     public static function getSubscribedEvents(): array
     {
         return [
-            KernelEvents::REQUEST => ['onKernelRequest', PHP_INT_MAX],
+            KernelEvents::REQUEST => ['onKernelRequest', PHP_INT_MAX - 1],
         ];
     }
 

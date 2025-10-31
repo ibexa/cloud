@@ -36,9 +36,9 @@ final class UpsunEnvVarLoaderTest extends TestCase
 
     /**
      * @param array<string, array<array<string, mixed>>> $relationships
-     * @param array<string, array<string, mixed>>        $routes
-     * @param array<string, string>                      $expectedEnv
-     * @param array<string, mixed>                       $serverValues
+     * @param array<string, array<string, mixed>> $routes
+     * @param array<string, string> $expectedEnv
+     * @param array<string, mixed> $serverValues
      *
      * @dataProvider providerForTestLoadEnvVars
      */
@@ -127,6 +127,22 @@ final class UpsunEnvVarLoaderTest extends TestCase
             $routes,
             $expected,
             $serverValues,
+        ];
+
+        $expected = [
+            'DFS_NFS_PATH' => '/mnt/dfs/nfs',
+            'DFS_DATABASE_CHARSET' => 'utf8mb4',
+            'DFS_DATABASE_COLLATION' => 'utf8mb4_unicode_520_ci',
+            'DFS_DATABASE_DRIVER' => 'pdo_mysql',
+            'DFS_DATABASE_URL' => 'mysql://dfs:dfs@localhost:3306/dfs',
+            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+        ];
+
+        yield 'dfs' => [
+            ['dfs_database' => [$this->createDfs()]],
+            $routes,
+            $expected,
+            $serverValues + ['PLATFORMSH_DFS_NFS_PATH' => '/mnt/dfs/nfs'],
         ];
     }
 
@@ -358,6 +374,34 @@ final class UpsunEnvVarLoaderTest extends TestCase
             'type' => 'solr:9.9',
             'public' => false,
             'host_mapped' => false,
+        ];
+    }
+
+    /**
+     * @return array{
+     *     host: string,
+     *     scheme: string,
+     *     username: string,
+     *     password: string,
+     *     port: int,
+     *     path: string,
+     *     query: array{is_master: bool}
+     * }
+     */
+    private function createDfs(): array
+    {
+        $parts = parse_url('mysql://dfs:dfs@localhost:3306/dfs');
+
+        return [
+            'host' => $parts['host'],
+            'scheme' => $parts['scheme'],
+            'username' => $parts['user'],
+            'password' => $parts['pass'],
+            'port' => $parts['port'],
+            'path' => ltrim($parts['path'], '/'),
+            'query' => [
+                'is_master' => true,
+            ],
         ];
     }
 }
