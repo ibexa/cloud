@@ -16,6 +16,7 @@ final class IbexaCloudBundle extends Bundle
     public function boot(): void
     {
         $envVars = (new UpsunEnvVarLoader())->loadEnvVars();
+        $envVars = ['TEST_ENV_VAR' => 'test'];
 
         foreach ($envVars as $name => $value) {
             $value = (string) $value;
