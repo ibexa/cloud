@@ -38,6 +38,7 @@ final class UpsunEnvVarLoader implements EnvVarLoaderInterface
 
         return array_filter(
             array_merge(
+                $this->buildDatabaseEnvVars($relationships),
                 $this->buildDfsEnvVars($relationships),
                 $this->buildCacheEnvVars($relationships),
                 $this->buildSessionEnvVars($relationships),
@@ -46,6 +47,79 @@ final class UpsunEnvVarLoader implements EnvVarLoaderInterface
             ),
             static fn (string|int|null $value): bool => $value !== null && $value !== ''
         );
+    }
+
+    /**
+     * @param array<string, array<array<string, mixed>>> $relationships
+     *
+     * @return array<string, string>
+     */
+    private function buildDatabaseEnvVars(array $relationships): array
+    {
+        $envVars = [];
+
+        foreach ($relationships as $key => $allValues) {
+            // Uppercase the key: "database" -> "DATABASE", "database_site" -> "DATABASE_SITE"
+            $key = strtoupper($key);
+
+            foreach ($allValues as $i => $endpoint) {
+                $scheme = $endpoint['scheme'] ?? '';
+                $isPGSQL = str_starts_with($scheme, 'pgsql');
+                $isMySQL = str_starts_with($scheme, 'mysql');
+
+                if (!$isPGSQL && !$isMySQL) {
+                    continue;
+                }
+
+                // Build prefix: first endpoint gets "DATABASE_", second gets "DATABASE_1_", etc.
+                $prefix = $i === 0 ? "{$key}_" : "{$key}_{$i}_";
+                // Replace hyphens with underscores
+                $prefix = str_replace('-', '_', $prefix);
+
+                // Normalize scheme for PostgreSQL
+                if ($isPGSQL) {
+                    $scheme = 'postgres';
+                }
+
+                $username = $endpoint['username'] ?? '';
+                $password = $endpoint['password'] ?? '';
+                $host = $endpoint['host'] ?? '';
+                $port = $endpoint['port'] ?? 0;
+                $path = $endpoint['path'] ?? 'main';
+
+                // Build URL
+                $url = sprintf('%s://', $scheme);
+                if ($username !== '') {
+                    $url .= $username;
+                    if ($password !== '') {
+                        $url .= ':' . $password;
+                    }
+                    $url .= '@';
+                }
+                $url .= sprintf('%s:%s/%s?sslmode=disable', $host, $port, $path);
+
+                // Add charset
+                $charset = $isMySQL ? self::MYSQL_DEFAULT_DATABASE_CHARSET : self::PGSQL_DEFAULT_DATABASE_CHARSET;
+                $url .= '&charset=' . $charset;
+
+                // Add serverVersion for PHP/Doctrine
+                $type = $endpoint['type'] ?? null;
+                if ($type !== null && str_contains((string) $type, ':')) {
+                    [, $version] = explode(':', (string) $type, 2);
+
+                    if ($isMySQL) {
+                        $minor = $version === '10.2' ? 7 : 0;
+                        $version = "{$version}.{$minor}-MariaDB";
+                    }
+
+                    $url .= '&serverVersion=' . $version;
+                }
+
+                $envVars["{$prefix}URL"] = $url;
+            }
+        }
+
+        return $envVars;
     }
 
     /**

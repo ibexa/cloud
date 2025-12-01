@@ -39,17 +39,6 @@ final class IbexaCloudExtension extends Extension implements PrependExtensionInt
         $this->configureUpsunSetup($container);
         $this->prependDefaultConfiguration($container);
         $this->prependJMSTranslation($container);
-
-        if (($_SERVER['HTTPCACHE_PURGE_TYPE'] ?? $_ENV['HTTPCACHE_PURGE_TYPE'] ?? null) === 'varnish') {
-            $container->setParameter('ibexa.http_cache.purge_type', 'varnish');
-        }
-
-        // Adapt config based on enabled PHP extensions
-        // Get imagine to use imagick if enabled, to avoid using php memory for image conversions
-        // Cannot be placed as env var due to how LiipImagineBundle processes its config
-        if (\extension_loaded('imagick')) {
-            $container->setParameter('liip_imagine_driver', 'imagick');
-        }
     }
 
     private function prependDefaultConfiguration(ContainerBuilder $container): void
@@ -90,17 +79,17 @@ final class IbexaCloudExtension extends Extension implements PrependExtensionInt
     {
         $envVars = (new UpsunEnvVarLoader())->loadEnvVars();
 
-        $this->loadServiceConfigurations($container, $envVars);
-    }
+        if (($_SERVER['HTTPCACHE_PURGE_TYPE'] ?? $_ENV['HTTPCACHE_PURGE_TYPE'] ?? null) === 'varnish') {
+            $container->setParameter('ibexa.http_cache.purge_type', 'varnish');
+        }
 
-    /**
-     * @param array<string, string> $envVars
-     */
-    private function loadServiceConfigurations(
-        ContainerBuilder $container,
-        array $envVars,
-    ): void {
+        // Cannot be placed as env var due to how LiipImagineBundle processes its config
+        if (\extension_loaded('imagick')) {
+            $container->setParameter('liip_imagine_driver', 'imagick');
+        }
+
         $projectDir = $container->getParameter('kernel.project_dir');
+        assert(is_string($projectDir));
 
         if (isset($envVars['DFS_NFS_PATH'])) {
             $loader = new YamlFileLoader(
@@ -121,12 +110,14 @@ final class IbexaCloudExtension extends Extension implements PrependExtensionInt
             default => null,
         };
 
-        if ($configFile !== null) {
-            $loader = new YamlFileLoader(
-                $container,
-                new FileLocator($projectDir . '/config/packages/cache_pool')
-            );
-            $loader->load($configFile);
+        if ($configFile === null) {
+            return;
         }
+
+        $loader = new YamlFileLoader(
+            $container,
+            new FileLocator($projectDir . '/config/packages/cache_pool')
+        );
+        $loader->load($configFile);
     }
 }

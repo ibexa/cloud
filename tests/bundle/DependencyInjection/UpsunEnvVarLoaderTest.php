@@ -87,6 +87,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
         $routes = $this->createRoutes();
 
         $expected = [
+            'DATABASE_URL' => 'mysql://user:some_password@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.4.0-MariaDB',
             'CACHE_POOL' => 'cache.redis',
             'CACHE_DSN' => 'rediscache.internal:6379?retry_interval=3',
             'SESSION_HANDLER_ID' => NativeSessionHandler::class,
@@ -110,6 +111,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
         ];
 
         $expected = [
+            'DATABASE_URL' => 'mysql://user:some_password@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.4.0-MariaDB',
             'CACHE_POOL' => 'cache.redis',
             'CACHE_DSN' => 'rediscache.internal:6379?retry_interval=3',
             'SESSION_HANDLER_ID' => NativeSessionHandler::class,
@@ -130,11 +132,11 @@ final class UpsunEnvVarLoaderTest extends TestCase
         ];
 
         $expected = [
+            'DFS_DATABASE_URL' => 'mysql://dfs:dfs@localhost:3306/dfs',
             'DFS_NFS_PATH' => '/mnt/dfs/nfs',
             'DFS_DATABASE_CHARSET' => 'utf8mb4',
             'DFS_DATABASE_COLLATION' => 'utf8mb4_unicode_520_ci',
             'DFS_DATABASE_DRIVER' => 'pdo_mysql',
-            'DFS_DATABASE_URL' => 'mysql://dfs:dfs@localhost:3306/dfs',
             'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
         ];
 
@@ -143,6 +145,185 @@ final class UpsunEnvVarLoaderTest extends TestCase
             $routes,
             $expected,
             $serverValues + ['PLATFORMSH_DFS_NFS_PATH' => '/mnt/dfs/nfs'],
+        ];
+
+        // Database test cases ported from symfony-cli/envs/remote_test.go
+
+        $expected = [
+            'DATABASE_URL' => 'postgres://main:main@database.internal:5432/main?sslmode=disable&charset=utf8',
+            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+        ];
+
+        yield 'postgresql without version' => [
+            [
+                'database' => [
+                    [
+                        'username' => 'main',
+                        'password' => 'main',
+                        'host' => 'database.internal',
+                        'port' => 5432,
+                        'path' => 'main',
+                        'scheme' => 'pgsql',
+                        'query' => ['is_master' => true],
+                    ],
+                ],
+            ],
+            $routes,
+            $expected,
+            $serverValues,
+        ];
+
+        $expected = [
+            'DATABASE_URL' => 'postgres://main:main@database.internal:5432/main?sslmode=disable&charset=utf8&serverVersion=9.6',
+            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+        ];
+
+        yield 'postgresql with version 9.6' => [
+            [
+                'database' => [
+                    [
+                        'username' => 'main',
+                        'password' => 'main',
+                        'host' => 'database.internal',
+                        'port' => 5432,
+                        'path' => 'main',
+                        'scheme' => 'pgsql',
+                        'type' => 'postgresql:9.6',
+                        'query' => ['is_master' => true],
+                    ],
+                ],
+            ],
+            $routes,
+            $expected,
+            $serverValues,
+        ];
+
+        $expected = [
+            'DATABASE_URL' => 'mysql://main:6e602888576703030f53c154051bd778@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.0.0-MariaDB',
+            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+        ];
+
+        yield 'mysql with version 10.0' => [
+            [
+                'database' => [
+                    [
+                        'username' => 'main',
+                        'password' => '6e602888576703030f53c154051bd778',
+                        'host' => 'database.internal',
+                        'port' => 3306,
+                        'path' => 'main',
+                        'scheme' => 'mysql',
+                        'type' => 'mysql:10.0',
+                        'query' => ['is_master' => true],
+                    ],
+                ],
+            ],
+            $routes,
+            $expected,
+            $serverValues,
+        ];
+
+        $expected = [
+            'DATABASE_URL' => 'postgres://main:main@database.internal:5432/main?sslmode=disable&charset=utf8&serverVersion=10',
+            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+        ];
+
+        yield 'postgresql with version 10' => [
+            [
+                'database' => [
+                    [
+                        'username' => 'main',
+                        'password' => 'main',
+                        'host' => 'database.internal',
+                        'port' => 5432,
+                        'path' => 'main',
+                        'scheme' => 'pgsql',
+                        'type' => 'postgresql:10',
+                        'query' => ['is_master' => true],
+                    ],
+                ],
+            ],
+            $routes,
+            $expected,
+            $serverValues,
+        ];
+
+        $expected = [
+            'DATABASE_URL' => 'mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.1.0-MariaDB',
+            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+        ];
+
+        yield 'mysql without credentials version 10.1' => [
+            [
+                'database' => [
+                    [
+                        'host' => 'database.internal',
+                        'port' => 3306,
+                        'scheme' => 'mysql',
+                        'type' => 'mysql:10.1',
+                        'query' => [],
+                    ],
+                ],
+            ],
+            $routes,
+            $expected,
+            $serverValues,
+        ];
+
+        $expected = [
+            'DATABASE_URL' => 'mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.2.7-MariaDB',
+            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+        ];
+
+        yield 'mysql version 10.2 with special minor version' => [
+            [
+                'database' => [
+                    [
+                        'host' => 'database.internal',
+                        'port' => 3306,
+                        'scheme' => 'mysql',
+                        'type' => 'mysql:10.2',
+                        'query' => [],
+                    ],
+                ],
+            ],
+            $routes,
+            $expected,
+            $serverValues,
+        ];
+
+        $expected = [
+            'DATABASE_URL' => 'mysql://user:pass@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB',
+            'DATABASE_1_URL' => 'mysql://replica_user:replica_pass@database-replica.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB',
+            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+        ];
+
+        yield 'two databases with indexed naming' => [
+            [
+                'database' => [
+                    [
+                        'username' => 'user',
+                        'password' => 'pass',
+                        'host' => 'database.internal',
+                        'port' => 3306,
+                        'scheme' => 'mysql',
+                        'type' => 'mysql:10.6',
+                        'query' => ['is_master' => true],
+                    ],
+                    [
+                        'username' => 'replica_user',
+                        'password' => 'replica_pass',
+                        'host' => 'database-replica.internal',
+                        'port' => 3306,
+                        'scheme' => 'mysql',
+                        'type' => 'mysql:10.6',
+                        'query' => ['is_master' => false],
+                    ],
+                ],
+            ],
+            $routes,
+            $expected,
+            $serverValues,
         ];
     }
 
