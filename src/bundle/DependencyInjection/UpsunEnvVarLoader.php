@@ -339,7 +339,7 @@ final class UpsunEnvVarLoader implements EnvVarLoaderInterface
                     $envVars["{$prefix}DATABASE"] = $path;
                 }
 
-                // Handle Elasticsearch (by rel field, like Go version)
+                // Handle Elasticsearch (by 'rel' field)
                 if ($rel === 'elasticsearch') {
                     $prefix = $this->buildPrefix($upperKey, $i);
 
