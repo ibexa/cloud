@@ -1,7 +1,0 @@
-parameters:
-	ignoreErrors:
-		-
-			message: '#^Parameter \#2 \$trustedHeaderSet of static method Symfony\\Component\\HttpFoundation\\Request\:\:setTrustedProxies\(\) expects int\<0, 63\>, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/bundle/EventSubscriber/TrustedHeaderClientIpEventSubscriber.php
