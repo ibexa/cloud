@@ -12,7 +12,7 @@ use Ibexa\Bundle\Core\Session\Handler\NativeSessionHandler;
 use JsonException;
 use Symfony\Component\DependencyInjection\EnvVarLoaderInterface;
 
-final class UpsunEnvVarLoader implements EnvVarLoaderInterface
+final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
 {
     private const string MYSQL_DEFAULT_DATABASE_CHARSET = 'utf8mb4';
 
@@ -282,14 +282,12 @@ final class UpsunEnvVarLoader implements EnvVarLoaderInterface
         }
 
         // Fallback: use any available Redis instance (by scheme)
-        if (isset($groupedRelationships['redis'])) {
-            foreach ($groupedRelationships['redis'] as $endpoints) {
-                foreach ($endpoints as $endpoint) {
-                    return [
-                        $this->envKey('session_handler_id') => NativeSessionHandler::class,
-                        $this->envKey('session_save_path') => sprintf('%s:%d', $endpoint['host'], $endpoint['port']),
-                    ];
-                }
+        foreach ($groupedRelationships['redis'] as $endpoints) {
+            foreach ($endpoints as $endpoint) {
+                return [
+                    $this->envKey('session_handler_id') => NativeSessionHandler::class,
+                    $this->envKey('session_save_path') => sprintf('%s:%d', $endpoint['host'], $endpoint['port']),
+                ];
             }
         }
 
