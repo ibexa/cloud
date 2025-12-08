@@ -76,87 +76,243 @@ final class UpsunEnvVarLoaderTest extends TestCase
      */
     public function providerForTestLoadEnvVars(): iterable
     {
-        $relationships = [
-            'database' => [
-                $this->createDatabase(),
-            ],
-            'rediscache' => [
-                $this->createRedisCache(),
-            ],
-        ];
         $routes = $this->createRoutes();
-
-        $expected = [
-            'DATABASE_URL' => 'mysql://user:some_password@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.4.0-MariaDB',
-            'CACHE_POOL' => 'cache.redis',
-            'CACHE_DSN' => 'rediscache.internal:6379?retry_interval=3',
-            'SESSION_HANDLER_ID' => NativeSessionHandler::class,
-            'SESSION_SAVE_PATH' => 'rediscache.internal:6379',
-            'SEARCH_ENGINE' => 'elasticsearch',
-            'ELASTICSEARCH_DSN' => 'http://elasticsearch.internal:9200',
-            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
-        ];
-
-        $serverValues = [
-            'PLATFORM_PROJECT_ENTROPY' => 'project_entropy',
-        ];
+        $serverValues = ['PLATFORM_PROJECT_ENTROPY' => 'project_entropy'];
 
         yield 'redis cache with session fallback and elasticsearch' => [
-            $relationships + ['elasticsearch' => [
-                $this->createElasticSearch(),
-            ]],
+            [
+                'replica_db' => [
+                    [
+                        'host' => 'database.internal',
+                        'hostname' => 'mysql_db_random._.eu-4.platformsh.site',
+                        'cluster' => 'some_cluster',
+                        'service' => 'mysqldb',
+                        'rel' => 'user',
+                        'scheme' => 'mysql',
+                        'username' => 'user',
+                        'password' => 'some_password',
+                        'port' => 3306,
+                        'epoch' => 0,
+                        'path' => 'main',
+                        'query' => ['is_master' => true],
+                        'fragment' => null,
+                        'public' => false,
+                        'host_mapped' => false,
+                        'type' => 'mariadb:10.4',
+                        'instance_ips' => ['127.0.0.1'],
+                        'ip' => '127.0.0.1',
+                    ],
+                ],
+                'rediscache' => [
+                    [
+                        'host' => 'rediscache.internal',
+                        'hostname' => 'redis.service._.eu-4.platformsh.site',
+                        'cluster' => 'some_cluster',
+                        'service' => 'rediscache',
+                        'rel' => 'redis',
+                        'scheme' => 'redis',
+                        'username' => null,
+                        'password' => null,
+                        'port' => 6379,
+                        'epoch' => 0,
+                        'path' => null,
+                        'query' => [],
+                        'fragment' => null,
+                        'public' => false,
+                        'host_mapped' => false,
+                        'type' => 'redis:5.0',
+                        'instance_ips' => ['127.0.0.1'],
+                        'ip' => '127.0.0.1',
+                    ],
+                ],
+                'site_elasticsearch' => [
+                    [
+                        'username' => null,
+                        'scheme' => 'http',
+                        'service' => 'elasticsearch',
+                        'fragment' => null,
+                        'ip' => '123.456.78.90',
+                        'hostname' => 'azertyuiopqsdfghjklm.elasticsearch.service._.eu-1.platformsh.site',
+                        'port' => 9200,
+                        'cluster' => 'azertyuiopqsdf-main-7rqtwti',
+                        'host' => 'elasticsearch.internal',
+                        'rel' => 'elasticsearch',
+                        'path' => null,
+                        'query' => [],
+                        'password' => 'ChangeMe',
+                        'type' => 'elasticsearch:8.5',
+                        'public' => false,
+                        'host_mapped' => false,
+                    ],
+                ],
+            ],
             $routes,
-            $expected,
+            [
+                'REPLICA_DB_URL' => 'mysql://user:some_password@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.4.0-MariaDB',
+                'REPLICA_DB_USER' => 'user',
+                'REPLICA_DB_USERNAME' => 'user',
+                'REPLICA_DB_PASSWORD' => 'some_password',
+                'REPLICA_DB_HOST' => 'database.internal',
+                'REPLICA_DB_PORT' => '3306',
+                'REPLICA_DB_NAME' => 'main',
+                'REPLICA_DB_DATABASE' => 'main',
+                'REPLICA_DB_DRIVER' => 'mysql',
+                'REPLICA_DB_SERVER' => 'mysql://database.internal:3306',
+                'REDISCACHE_URL' => 'redis://rediscache.internal:6379',
+                'REDISCACHE_HOST' => 'rediscache.internal',
+                'REDISCACHE_PORT' => '6379',
+                'REDISCACHE_SCHEME' => 'redis',
+                'CACHE_POOL' => 'cache.redis',
+                'CACHE_DSN' => 'rediscache.internal:6379?retry_interval=3',
+                'SESSION_HANDLER_ID' => NativeSessionHandler::class,
+                'SESSION_SAVE_PATH' => 'rediscache.internal:6379',
+                'SEARCH_ENGINE' => 'elasticsearch',
+                'ELASTICSEARCH_DSN' => 'http://elasticsearch.internal:9200',
+                'SITE_ELASTICSEARCH_URL' => 'http://elasticsearch.internal:9200',
+                'SITE_ELASTICSEARCH_HOST' => 'elasticsearch.internal',
+                'SITE_ELASTICSEARCH_PORT' => '9200',
+                'SITE_ELASTICSEARCH_SCHEME' => 'http',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            ],
             $serverValues,
-        ];
-
-        $expected = [
-            'DATABASE_URL' => 'mysql://user:some_password@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.4.0-MariaDB',
-            'CACHE_POOL' => 'cache.redis',
-            'CACHE_DSN' => 'rediscache.internal:6379?retry_interval=3',
-            'SESSION_HANDLER_ID' => NativeSessionHandler::class,
-            'SESSION_SAVE_PATH' => 'rediscache.internal:6379',
-            'SEARCH_ENGINE' => 'solr',
-            'SOLR_DSN' => 'http://solr.internal:8080/solr',
-            'SOLR_CORE' => 'collection1',
-            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
         ];
 
         yield 'redis cache with session fallback and solr' => [
-            $relationships + ['solr' => [
-                $this->createSolr(),
-            ]],
+            [
+                'replica_db' => [
+                    [
+                        'host' => 'database.internal',
+                        'hostname' => 'mysql_db_random._.eu-4.platformsh.site',
+                        'cluster' => 'some_cluster',
+                        'service' => 'mysqldb',
+                        'rel' => 'user',
+                        'scheme' => 'mysql',
+                        'username' => 'user',
+                        'password' => 'some_password',
+                        'port' => 3306,
+                        'epoch' => 0,
+                        'path' => 'main',
+                        'query' => ['is_master' => true],
+                        'fragment' => null,
+                        'public' => false,
+                        'host_mapped' => false,
+                        'type' => 'mariadb:10.4',
+                        'instance_ips' => ['127.0.0.1'],
+                        'ip' => '127.0.0.1',
+                    ],
+                ],
+                'rediscache' => [
+                    [
+                        'host' => 'rediscache.internal',
+                        'hostname' => 'redis.service._.eu-4.platformsh.site',
+                        'cluster' => 'some_cluster',
+                        'service' => 'rediscache',
+                        'rel' => 'redis',
+                        'scheme' => 'redis',
+                        'username' => null,
+                        'password' => null,
+                        'port' => 6379,
+                        'epoch' => 0,
+                        'path' => null,
+                        'query' => [],
+                        'fragment' => null,
+                        'public' => false,
+                        'host_mapped' => false,
+                        'type' => 'redis:5.0',
+                        'instance_ips' => ['127.0.0.1'],
+                        'ip' => '127.0.0.1',
+                    ],
+                ],
+                'site_solr' => [
+                    [
+                        'username' => null,
+                        'scheme' => 'solr',
+                        'service' => 'solr',
+                        'fragment' => null,
+                        'ip' => '123.456.78.90',
+                        'hostname' => 'host.solr.service._.eu-1.platformsh.site',
+                        'port' => 8080,
+                        'cluster' => 'some-cluster',
+                        'host' => 'solr.internal',
+                        'rel' => 'solr',
+                        'path' => 'solr/collection1',
+                        'query' => [],
+                        'password' => null,
+                        'type' => 'solr:9.9',
+                        'public' => false,
+                        'host_mapped' => false,
+                    ],
+                ],
+            ],
             $routes,
-            $expected,
+            [
+                'REPLICA_DB_URL' => 'mysql://user:some_password@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.4.0-MariaDB',
+                'REPLICA_DB_USER' => 'user',
+                'REPLICA_DB_USERNAME' => 'user',
+                'REPLICA_DB_PASSWORD' => 'some_password',
+                'REPLICA_DB_HOST' => 'database.internal',
+                'REPLICA_DB_PORT' => '3306',
+                'REPLICA_DB_NAME' => 'main',
+                'REPLICA_DB_DATABASE' => 'main',
+                'REPLICA_DB_DRIVER' => 'mysql',
+                'REPLICA_DB_SERVER' => 'mysql://database.internal:3306',
+                'REDISCACHE_URL' => 'redis://rediscache.internal:6379',
+                'REDISCACHE_HOST' => 'rediscache.internal',
+                'REDISCACHE_PORT' => '6379',
+                'REDISCACHE_SCHEME' => 'redis',
+                'CACHE_POOL' => 'cache.redis',
+                'CACHE_DSN' => 'rediscache.internal:6379?retry_interval=3',
+                'SESSION_HANDLER_ID' => NativeSessionHandler::class,
+                'SESSION_SAVE_PATH' => 'rediscache.internal:6379',
+                'SEARCH_ENGINE' => 'solr',
+                'SOLR_DSN' => 'http://solr.internal:8080/solr',
+                'SOLR_CORE' => 'collection1',
+                'SITE_SOLR_HOST' => 'solr.internal',
+                'SITE_SOLR_PORT' => '8080',
+                'SITE_SOLR_NAME' => 'solr/collection1',
+                'SITE_SOLR_DATABASE' => 'solr/collection1',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            ],
             $serverValues,
         ];
 
-        $expected = [
-            'DFS_DATABASE_URL' => 'mysql://dfs:dfs@localhost:3306/dfs',
-            'DFS_NFS_PATH' => '/mnt/dfs/nfs',
-            'DFS_DATABASE_CHARSET' => 'utf8mb4',
-            'DFS_DATABASE_COLLATION' => 'utf8mb4_unicode_520_ci',
-            'DFS_DATABASE_DRIVER' => 'pdo_mysql',
-            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
-        ];
-
         yield 'dfs' => [
-            ['dfs_database' => [$this->createDfs()]],
+            [
+                'dfs_database' => [
+                    [
+                        'host' => 'dfs_database.internal',
+                        'scheme' => 'mysql',
+                        'username' => 'dfs',
+                        'password' => 'dfs',
+                        'port' => 3306,
+                        'path' => 'dfs',
+                        'query' => ['is_master' => true],
+                    ],
+                ],
+            ],
             $routes,
-            $expected,
+            [
+                'DFS_DATABASE_URL' => 'mysql://dfs:dfs@dfs_database.internal:3306/dfs?sslmode=disable&charset=utf8mb4',
+                'DFS_DATABASE_USER' => 'dfs',
+                'DFS_DATABASE_USERNAME' => 'dfs',
+                'DFS_DATABASE_PASSWORD' => 'dfs',
+                'DFS_DATABASE_HOST' => 'dfs_database.internal',
+                'DFS_DATABASE_PORT' => '3306',
+                'DFS_DATABASE_NAME' => 'dfs',
+                'DFS_DATABASE_DATABASE' => 'dfs',
+                'DFS_DATABASE_DRIVER' => 'pdo_mysql',
+                'DFS_DATABASE_SERVER' => 'mysql://dfs_database.internal:3306',
+                'DFS_NFS_PATH' => '/mnt/dfs/nfs',
+                'DFS_DATABASE_CHARSET' => 'utf8mb4',
+                'DFS_DATABASE_COLLATION' => 'utf8mb4_unicode_520_ci',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            ],
             $serverValues + ['PLATFORMSH_DFS_NFS_PATH' => '/mnt/dfs/nfs'],
-        ];
-
-        // Database test cases ported from symfony-cli/envs/remote_test.go
-
-        $expected = [
-            'DATABASE_URL' => 'postgres://main:main@database.internal:5432/main?sslmode=disable&charset=utf8',
-            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
         ];
 
         yield 'postgresql without version' => [
             [
-                'database' => [
+                'pg_main' => [
                     [
                         'username' => 'main',
                         'password' => 'main',
@@ -169,18 +325,25 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 ],
             ],
             $routes,
-            $expected,
+            [
+                'PG_MAIN_URL' => 'postgres://main:main@database.internal:5432/main?sslmode=disable&charset=utf8',
+                'PG_MAIN_USER' => 'main',
+                'PG_MAIN_USERNAME' => 'main',
+                'PG_MAIN_PASSWORD' => 'main',
+                'PG_MAIN_HOST' => 'database.internal',
+                'PG_MAIN_PORT' => '5432',
+                'PG_MAIN_NAME' => 'main',
+                'PG_MAIN_DATABASE' => 'main',
+                'PG_MAIN_DRIVER' => 'postgres',
+                'PG_MAIN_SERVER' => 'postgres://database.internal:5432',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            ],
             $serverValues,
-        ];
-
-        $expected = [
-            'DATABASE_URL' => 'postgres://main:main@database.internal:5432/main?sslmode=disable&charset=utf8&serverVersion=9.6',
-            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
         ];
 
         yield 'postgresql with version 9.6' => [
             [
-                'database' => [
+                'legacy_pgsql' => [
                     [
                         'username' => 'main',
                         'password' => 'main',
@@ -194,18 +357,25 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 ],
             ],
             $routes,
-            $expected,
+            [
+                'LEGACY_PGSQL_URL' => 'postgres://main:main@database.internal:5432/main?sslmode=disable&charset=utf8&serverVersion=9.6',
+                'LEGACY_PGSQL_USER' => 'main',
+                'LEGACY_PGSQL_USERNAME' => 'main',
+                'LEGACY_PGSQL_PASSWORD' => 'main',
+                'LEGACY_PGSQL_HOST' => 'database.internal',
+                'LEGACY_PGSQL_PORT' => '5432',
+                'LEGACY_PGSQL_NAME' => 'main',
+                'LEGACY_PGSQL_DATABASE' => 'main',
+                'LEGACY_PGSQL_DRIVER' => 'postgres',
+                'LEGACY_PGSQL_SERVER' => 'postgres://database.internal:5432',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            ],
             $serverValues,
-        ];
-
-        $expected = [
-            'DATABASE_URL' => 'mysql://main:6e602888576703030f53c154051bd778@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.0.0-MariaDB',
-            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
         ];
 
         yield 'mysql with version 10.0' => [
             [
-                'database' => [
+                'app_db' => [
                     [
                         'username' => 'main',
                         'password' => '6e602888576703030f53c154051bd778',
@@ -219,18 +389,25 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 ],
             ],
             $routes,
-            $expected,
+            [
+                'APP_DB_URL' => 'mysql://main:6e602888576703030f53c154051bd778@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.0.0-MariaDB',
+                'APP_DB_USER' => 'main',
+                'APP_DB_USERNAME' => 'main',
+                'APP_DB_PASSWORD' => '6e602888576703030f53c154051bd778',
+                'APP_DB_HOST' => 'database.internal',
+                'APP_DB_PORT' => '3306',
+                'APP_DB_NAME' => 'main',
+                'APP_DB_DATABASE' => 'main',
+                'APP_DB_DRIVER' => 'mysql',
+                'APP_DB_SERVER' => 'mysql://database.internal:3306',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            ],
             $serverValues,
-        ];
-
-        $expected = [
-            'DATABASE_URL' => 'postgres://main:main@database.internal:5432/main?sslmode=disable&charset=utf8&serverVersion=10',
-            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
         ];
 
         yield 'postgresql with version 10' => [
             [
-                'database' => [
+                'analytics_db' => [
                     [
                         'username' => 'main',
                         'password' => 'main',
@@ -244,18 +421,25 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 ],
             ],
             $routes,
-            $expected,
+            [
+                'ANALYTICS_DB_URL' => 'postgres://main:main@database.internal:5432/main?sslmode=disable&charset=utf8&serverVersion=10',
+                'ANALYTICS_DB_USER' => 'main',
+                'ANALYTICS_DB_USERNAME' => 'main',
+                'ANALYTICS_DB_PASSWORD' => 'main',
+                'ANALYTICS_DB_HOST' => 'database.internal',
+                'ANALYTICS_DB_PORT' => '5432',
+                'ANALYTICS_DB_NAME' => 'main',
+                'ANALYTICS_DB_DATABASE' => 'main',
+                'ANALYTICS_DB_DRIVER' => 'postgres',
+                'ANALYTICS_DB_SERVER' => 'postgres://database.internal:5432',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            ],
             $serverValues,
-        ];
-
-        $expected = [
-            'DATABASE_URL' => 'mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.1.0-MariaDB',
-            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
         ];
 
         yield 'mysql without credentials version 10.1' => [
             [
-                'database' => [
+                'cache_db' => [
                     [
                         'host' => 'database.internal',
                         'port' => 3306,
@@ -266,18 +450,22 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 ],
             ],
             $routes,
-            $expected,
+            [
+                'CACHE_DB_URL' => 'mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.1.0-MariaDB',
+                'CACHE_DB_HOST' => 'database.internal',
+                'CACHE_DB_PORT' => '3306',
+                'CACHE_DB_NAME' => 'main',
+                'CACHE_DB_DATABASE' => 'main',
+                'CACHE_DB_DRIVER' => 'mysql',
+                'CACHE_DB_SERVER' => 'mysql://database.internal:3306',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            ],
             $serverValues,
-        ];
-
-        $expected = [
-            'DATABASE_URL' => 'mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.2.7-MariaDB',
-            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
         ];
 
         yield 'mysql version 10.2 with special minor version' => [
             [
-                'database' => [
+                'cms_database' => [
                     [
                         'host' => 'database.internal',
                         'port' => 3306,
@@ -288,19 +476,22 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 ],
             ],
             $routes,
-            $expected,
+            [
+                'CMS_DATABASE_URL' => 'mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.2.7-MariaDB',
+                'CMS_DATABASE_HOST' => 'database.internal',
+                'CMS_DATABASE_PORT' => '3306',
+                'CMS_DATABASE_NAME' => 'main',
+                'CMS_DATABASE_DATABASE' => 'main',
+                'CMS_DATABASE_DRIVER' => 'mysql',
+                'CMS_DATABASE_SERVER' => 'mysql://database.internal:3306',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            ],
             $serverValues,
-        ];
-
-        $expected = [
-            'DATABASE_URL' => 'mysql://user:pass@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB',
-            'DATABASE_1_URL' => 'mysql://replica_user:replica_pass@database-replica.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB',
-            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
         ];
 
         yield 'two databases with indexed naming' => [
             [
-                'database' => [
+                'main_mysql' => [
                     [
                         'username' => 'user',
                         'password' => 'pass',
@@ -322,7 +513,29 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 ],
             ],
             $routes,
-            $expected,
+            [
+                'MAIN_MYSQL_URL' => 'mysql://user:pass@database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB',
+                'MAIN_MYSQL_USER' => 'user',
+                'MAIN_MYSQL_USERNAME' => 'user',
+                'MAIN_MYSQL_PASSWORD' => 'pass',
+                'MAIN_MYSQL_HOST' => 'database.internal',
+                'MAIN_MYSQL_PORT' => '3306',
+                'MAIN_MYSQL_NAME' => 'main',
+                'MAIN_MYSQL_DATABASE' => 'main',
+                'MAIN_MYSQL_DRIVER' => 'mysql',
+                'MAIN_MYSQL_SERVER' => 'mysql://database.internal:3306',
+                'MAIN_MYSQL_1_URL' => 'mysql://replica_user:replica_pass@database-replica.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.6.0-MariaDB',
+                'MAIN_MYSQL_1_USER' => 'replica_user',
+                'MAIN_MYSQL_1_USERNAME' => 'replica_user',
+                'MAIN_MYSQL_1_PASSWORD' => 'replica_pass',
+                'MAIN_MYSQL_1_HOST' => 'database-replica.internal',
+                'MAIN_MYSQL_1_PORT' => '3306',
+                'MAIN_MYSQL_1_NAME' => 'main',
+                'MAIN_MYSQL_1_DATABASE' => 'main',
+                'MAIN_MYSQL_1_DRIVER' => 'mysql',
+                'MAIN_MYSQL_1_SERVER' => 'mysql://database-replica.internal:3306',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            ],
             $serverValues,
         ];
     }
@@ -378,210 +591,6 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'production_url' => 'https://www.some_app.example.com/',
                 'to' => 'https://app.example.com/',
                 'type' => 'redirect',
-            ],
-        ];
-    }
-
-    /**
-     * @return array{
-     *     host: string,
-     *     hostname: string,
-     *     cluster: string,
-     *     service: string,
-     *     rel: string,
-     *     scheme: string,
-     *     username: string,
-     *     password: string,
-     *     port: int,
-     *     epoch: int,
-     *     path: string,
-     *     query: array<string, bool>,
-     *     fragment: null,
-     *     public: bool,
-     *     host_mapped: bool,
-     *     type: string,
-     *     instance_ips: array<int, string>,
-     *     ip: string
-     * }
-     */
-    private function createDatabase(): array
-    {
-        return [
-            'host' => 'database.internal',
-            'hostname' => 'mysql_db_random._.eu-4.platformsh.site',
-            'cluster' => 'some_cluster',
-            'service' => 'mysqldb',
-            'rel' => 'user',
-            'scheme' => 'mysql',
-            'username' => 'user',
-            'password' => 'some_password',
-            'port' => 3306,
-            'epoch' => 0,
-            'path' => 'main',
-            'query' => ['is_master' => true],
-            'fragment' => null,
-            'public' => false,
-            'host_mapped' => false,
-            'type' => 'mariadb:10.4',
-            'instance_ips' => ['127.0.0.1'],
-            'ip' => '127.0.0.1',
-        ];
-    }
-
-    /**
-     * @return array{
-     *     host: string,
-     *     hostname: string,
-     *     cluster: string,
-     *     service: string,
-     *     rel: string,
-     *     scheme: string,
-     *     username: null,
-     *     password: null,
-     *     port: int,
-     *     epoch: int,
-     *     path: null,
-     *     query: array<int, mixed>,
-     *     fragment: null,
-     *     public: bool,
-     *     host_mapped: bool,
-     *     type: string,
-     *     instance_ips: array<int, string>,
-     *     ip: string
-     * }
-     */
-    private function createRedisCache(): array
-    {
-        return [
-            'host' => 'rediscache.internal',
-            'hostname' => 'redis.service._.eu-4.platformsh.site',
-            'cluster' => 'some_cluster',
-            'service' => 'rediscache',
-            'rel' => 'redis',
-            'scheme' => 'redis',
-            'username' => null,
-            'password' => null,
-            'port' => 6379,
-            'epoch' => 0,
-            'path' => null,
-            'query' => [],
-            'fragment' => null,
-            'public' => false,
-            'host_mapped' => false,
-            'type' => 'redis:5.0',
-            'instance_ips' => ['127.0.0.1'],
-            'ip' => '127.0.0.1',
-        ];
-    }
-
-    /**
-     * @return array{
-     *     username: null,
-     *     scheme: string,
-     *     service: string,
-     *     fragment: null,
-     *     ip: string,
-     *     hostname: string,
-     *     port: int,
-     *     cluster: string,
-     *     host: string,
-     *     rel: string,
-     *     path: null,
-     *     query: array<int, mixed>,
-     *     password: string,
-     *     type: string,
-     *     public: bool,
-     *     host_mapped: bool
-     * }
-     */
-    private function createElasticSearch(): array
-    {
-        return [
-            'username' => null,
-            'scheme' => 'http',
-            'service' => 'elasticsearch',
-            'fragment' => null,
-            'ip' => '123.456.78.90',
-            'hostname' => 'azertyuiopqsdfghjklm.elasticsearch.service._.eu-1.platformsh.site',
-            'port' => 9200,
-            'cluster' => 'azertyuiopqsdf-main-7rqtwti',
-            'host' => 'elasticsearch.internal',
-            'rel' => 'elasticsearch',
-            'path' => null,
-            'query' => [],
-            'password' => 'ChangeMe',
-            'type' => 'elasticsearch:8.5',
-            'public' => false,
-            'host_mapped' => false,
-        ];
-    }
-
-    /**
-     * @return array{
-     *     username: null,
-     *     scheme: string,
-     *     service: string,
-     *     fragment: null,
-     *     ip: string,
-     *     hostname: string,
-     *     port: int,
-     *     cluster: string,
-     *     host: string,
-     *     rel: string,
-     *     path: string,
-     *     query: array<int, mixed>,
-     *     password: null,
-     *     type: string,
-     *     public: bool,
-     *     host_mapped: bool
-     * }
-     */
-    private function createSolr(): array
-    {
-        return [
-            'username' => null,
-            'scheme' => 'solr',
-            'service' => 'solr',
-            'fragment' => null,
-            'ip' => '123.456.78.90',
-            'hostname' => 'host.solr.service._.eu-1.platformsh.site',
-            'port' => 8080,
-            'cluster' => 'some-cluster',
-            'host' => 'solr.internal',
-            'rel' => 'solr',
-            'path' => 'solr/collection1',
-            'query' => [],
-            'password' => null,
-            'type' => 'solr:9.9',
-            'public' => false,
-            'host_mapped' => false,
-        ];
-    }
-
-    /**
-     * @return array{
-     *     host: string,
-     *     scheme: string,
-     *     username: string,
-     *     password: string,
-     *     port: int,
-     *     path: string,
-     *     query: array{is_master: bool}
-     * }
-     */
-    private function createDfs(): array
-    {
-        $parts = parse_url('mysql://dfs:dfs@localhost:3306/dfs');
-
-        return [
-            'host' => $parts['host'],
-            'scheme' => $parts['scheme'],
-            'username' => $parts['user'],
-            'password' => $parts['pass'],
-            'port' => $parts['port'],
-            'path' => ltrim($parts['path'], '/'),
-            'query' => [
-                'is_master' => true,
             ],
         ];
     }

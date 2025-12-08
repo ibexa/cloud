@@ -54,6 +54,7 @@ final class TrustedHeaderClientIpEventSubscriber implements EventSubscriberInter
             $request->headers->set('X_FORWARDED_FOR', $trustedClientIp);
         }
 
+        /** @var int<0, 63> $trustedHeaderSet */
         Request::setTrustedProxies($trustedProxies, $trustedHeaderSet);
     }
 
