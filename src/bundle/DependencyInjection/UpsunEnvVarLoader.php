@@ -9,7 +9,6 @@ declare(strict_types=1);
 namespace Ibexa\Bundle\Cloud\DependencyInjection;
 
 use Ibexa\Bundle\Core\Session\Handler\NativeSessionHandler;
-use function is_string;
 use JsonException;
 use Symfony\Component\DependencyInjection\EnvVarLoaderInterface;
 
