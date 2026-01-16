@@ -46,6 +46,7 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
                 $this->buildSessionEnvVars($relationships, $groupedRelationships),
                 $this->buildSearchEnvVars($relationships),
                 $this->buildVarnishEnvVars($routes),
+                $this->buildAppSecretEnvVars(),
             ),
             static fn (string|int|null $value): bool => $value !== null && $value !== ''
         );
@@ -423,6 +424,25 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
             ?? '';
 
         return $envVars;
+    }
+
+    /**
+     * Provides APP_SECRET fallback using PLATFORM_PROJECT_ENTROPY if APP_SECRET is not already defined.
+     *
+     * @return array<string, string>
+     */
+    private function buildAppSecretEnvVars(): array
+    {
+        if (isset($_SERVER['APP_SECRET']) || isset($_ENV['APP_SECRET'])) {
+            return [];
+        }
+
+        $entropy = $_SERVER['PLATFORM_PROJECT_ENTROPY'] ?? null;
+        if ($entropy === null) {
+            return [];
+        }
+
+        return ['APP_SECRET' => $entropy];
     }
 
     /**
