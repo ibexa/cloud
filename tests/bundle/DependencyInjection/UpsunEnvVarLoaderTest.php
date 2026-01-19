@@ -173,6 +173,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'SITE_ELASTICSEARCH_PORT' => '9200',
                 'SITE_ELASTICSEARCH_SCHEME' => 'http',
                 'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
             ],
             $serverValues,
         ];
@@ -272,6 +273,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'SITE_SOLR_NAME' => 'solr/collection1',
                 'SITE_SOLR_DATABASE' => 'solr/collection1',
                 'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
             ],
             $serverValues,
         ];
@@ -306,6 +308,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'DFS_DATABASE_CHARSET' => 'utf8mb4',
                 'DFS_DATABASE_COLLATION' => 'utf8mb4_unicode_520_ci',
                 'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
             ],
             $serverValues + ['PLATFORMSH_DFS_NFS_PATH' => '/mnt/dfs/nfs'],
         ];
@@ -337,6 +340,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'PG_MAIN_DRIVER' => 'postgres',
                 'PG_MAIN_SERVER' => 'postgres://database.internal:5432',
                 'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
             ],
             $serverValues,
         ];
@@ -369,6 +373,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'LEGACY_PGSQL_DRIVER' => 'postgres',
                 'LEGACY_PGSQL_SERVER' => 'postgres://database.internal:5432',
                 'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
             ],
             $serverValues,
         ];
@@ -401,6 +406,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'APP_DB_DRIVER' => 'mysql',
                 'APP_DB_SERVER' => 'mysql://database.internal:3306',
                 'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
             ],
             $serverValues,
         ];
@@ -433,6 +439,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'ANALYTICS_DB_DRIVER' => 'postgres',
                 'ANALYTICS_DB_SERVER' => 'postgres://database.internal:5432',
                 'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
             ],
             $serverValues,
         ];
@@ -459,6 +466,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'CACHE_DB_DRIVER' => 'mysql',
                 'CACHE_DB_SERVER' => 'mysql://database.internal:3306',
                 'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
             ],
             $serverValues,
         ];
@@ -485,6 +493,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'CMS_DATABASE_DRIVER' => 'mysql',
                 'CMS_DATABASE_SERVER' => 'mysql://database.internal:3306',
                 'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
             ],
             $serverValues,
         ];
@@ -535,6 +544,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
                 'MAIN_MYSQL_1_DRIVER' => 'mysql',
                 'MAIN_MYSQL_1_SERVER' => 'mysql://database-replica.internal:3306',
                 'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
             ],
             $serverValues,
         ];
