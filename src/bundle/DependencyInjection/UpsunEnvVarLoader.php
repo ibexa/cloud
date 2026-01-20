@@ -433,7 +433,7 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
      */
     private function buildAppSecretEnvVars(): array
     {
-        if (!empty($_SERVER['APP_SECRET']) || !empty($_ENV['APP_SECRET'])) {
+        if (($_SERVER['APP_SECRET'] ?? '') !== '' || ($_ENV['APP_SECRET'] ?? '') !== '') {
             return [];
         }
 
