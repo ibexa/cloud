@@ -200,9 +200,13 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
         $envVars = [];
         $cachePoolSet = false;
 
-        // Process Redis first (always preferred over memcached)
-        if (isset($groupedRelationships['redis'])) {
-            foreach ($groupedRelationships['redis'] as $key => $endpoints) {
+        // Process Redis/Valkey first (always preferred over memcached)
+        foreach (['redis', 'valkey'] as $scheme) {
+            if (!isset($groupedRelationships[$scheme])) {
+                continue;
+            }
+
+            foreach ($groupedRelationships[$scheme] as $key => $endpoints) {
                 $key = strtoupper($key);
 
                 foreach (array_values($endpoints) as $i => $endpoint) {
@@ -258,8 +262,8 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
     }
 
     /**
-     * Uses Redis-based sessions if possible. If a dedicated 'redissession' relationship
-     * is available, use that. If not, fallback to any available Redis instance.
+     * Uses Redis/Valkey-based sessions if possible. If a dedicated 'redissession' or 'valkeysession'
+     * relationship is available, use that. If not, fallback to any available Redis/Valkey instance.
      *
      * @param array<string, array<array<string, mixed>>> $relationships Original relationships
      * @param array<string, array<string, array<array<string, mixed>>>> $groupedRelationships Grouped by scheme
@@ -268,10 +272,15 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
      */
     private function buildSessionEnvVars(array $relationships, array $groupedRelationships): array
     {
-        // First, try a dedicated 'redissession' relationship
-        if (isset($relationships['redissession'])) {
-            foreach ($relationships['redissession'] as $endpoint) {
-                if (($endpoint['scheme'] ?? null) !== 'redis') {
+        // First, try a dedicated 'redissession' or 'valkeysession' relationship
+        foreach (['redissession', 'valkeysession'] as $relationshipKey) {
+            if (!isset($relationships[$relationshipKey])) {
+                continue;
+            }
+
+            foreach ($relationships[$relationshipKey] as $endpoint) {
+                $scheme = $endpoint['scheme'] ?? null;
+                if ($scheme !== 'redis' && $scheme !== 'valkey') {
                     continue;
                 }
 
@@ -282,9 +291,13 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
             }
         }
 
-        // Fallback: use any available Redis instance (by scheme)
-        if (isset($groupedRelationships['redis'])) {
-            foreach ($groupedRelationships['redis'] as $endpoints) {
+        // Fallback: use any available Redis/Valkey instance (by scheme)
+        foreach (['redis', 'valkey'] as $scheme) {
+            if (!isset($groupedRelationships[$scheme])) {
+                continue;
+            }
+
+            foreach ($groupedRelationships[$scheme] as $endpoints) {
                 foreach ($endpoints as $endpoint) {
                     return [
                         $this->envKey('session_handler_id') => NativeSessionHandler::class,
