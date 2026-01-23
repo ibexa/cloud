@@ -571,6 +571,19 @@ final class UpsunEnvVarLoaderTest extends TestCase
             $serverValues,
         ];
 
+        yield 'empty HTTPCACHE_VARNISH_INVALIDATE_TOKEN falls back to entropy' => [
+        [],
+        $routes,
+        [
+            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+            'APP_SECRET' => 'project_entropy',
+        ],
+        [
+            'PLATFORM_PROJECT_ENTROPY' => 'project_entropy',
+            'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => '',
+        ],
+        ];
+
         yield 'two databases with indexed naming' => [
             [
                 'main_mysql' => [

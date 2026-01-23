@@ -432,9 +432,10 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
             $envVars[$this->envKey('httpcache_purge_server')] = $purgeServer;
         }
 
-        $envVars[$this->envKey('httpcache_varnish_invalidate_token')] = $_SERVER['HTTPCACHE_VARNISH_INVALIDATE_TOKEN']
-            ?? $_SERVER['PLATFORM_PROJECT_ENTROPY']
-            ?? '';
+        $envVars[$this->envKey('httpcache_varnish_invalidate_token')] =
+            ($_SERVER['HTTPCACHE_VARNISH_INVALIDATE_TOKEN'] ?? '') !== ''
+                ? $_SERVER['HTTPCACHE_VARNISH_INVALIDATE_TOKEN']
+                : ($_SERVER['PLATFORM_PROJECT_ENTROPY'] ?? '');
 
         return $envVars;
     }
