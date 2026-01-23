@@ -248,7 +248,11 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
                     $envVars["{$prefix}PORT"] = (string) $port;
 
                     if (!$cachePoolSet) {
-                        @trigger_error('Usage of Memcached is deprecated, redis is recommended', E_USER_DEPRECATED);
+                        trigger_deprecation(
+                            'ibexa/cloud',
+                            '5.0.5',
+                            'Usage of Memcached is deprecated, redis is recommended',
+                        );
 
                         $envVars[$this->envKey('cache_pool')] = 'cache.memcached';
                         $envVars[$this->envKey('cache_dsn')] = sprintf('%s:%d', $host, $port);
