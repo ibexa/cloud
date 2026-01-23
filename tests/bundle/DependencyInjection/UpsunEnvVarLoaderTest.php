@@ -517,6 +517,72 @@ final class UpsunEnvVarLoaderTest extends TestCase
             $serverValues,
         ];
 
+        yield 'postgresql scheme prefix' => [
+            [
+                'main_db' => [
+                    [
+                        'username' => 'main',
+                        'password' => 'main',
+                        'host' => 'database.internal',
+                        'port' => 5432,
+                        'path' => 'main',
+                        'scheme' => 'postgresql',
+                        'type' => 'postgresql:15',
+                        'query' => ['is_master' => true],
+                    ],
+                ],
+            ],
+            $routes,
+            [
+                'MAIN_DB_URL' => 'postgres://main:main@database.internal:5432/main?sslmode=disable&charset=utf8&serverVersion=15',
+                'MAIN_DB_USER' => 'main',
+                'MAIN_DB_USERNAME' => 'main',
+                'MAIN_DB_PASSWORD' => 'main',
+                'MAIN_DB_HOST' => 'database.internal',
+                'MAIN_DB_PORT' => '5432',
+                'MAIN_DB_NAME' => 'main',
+                'MAIN_DB_DATABASE' => 'main',
+                'MAIN_DB_DRIVER' => 'postgres',
+                'MAIN_DB_SERVER' => 'postgres://database.internal:5432',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
+            ],
+            $serverValues,
+        ];
+
+        yield 'postgres scheme prefix' => [
+            [
+                'app_db' => [
+                    [
+                        'username' => 'app',
+                        'password' => 'secret',
+                        'host' => 'database.internal',
+                        'port' => 5432,
+                        'path' => 'app',
+                        'scheme' => 'postgres',
+                        'type' => 'postgresql:16',
+                        'query' => ['is_master' => true],
+                    ],
+                ],
+            ],
+            $routes,
+            [
+                'APP_DB_URL' => 'postgres://app:secret@database.internal:5432/app?sslmode=disable&charset=utf8&serverVersion=16',
+                'APP_DB_USER' => 'app',
+                'APP_DB_USERNAME' => 'app',
+                'APP_DB_PASSWORD' => 'secret',
+                'APP_DB_HOST' => 'database.internal',
+                'APP_DB_PORT' => '5432',
+                'APP_DB_NAME' => 'app',
+                'APP_DB_DATABASE' => 'app',
+                'APP_DB_DRIVER' => 'postgres',
+                'APP_DB_SERVER' => 'postgres://database.internal:5432',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
+            ],
+            $serverValues,
+        ];
+
         yield 'mysql without credentials version 10.1' => [
             [
                 'cache_db' => [

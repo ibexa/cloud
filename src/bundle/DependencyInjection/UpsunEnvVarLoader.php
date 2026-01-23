@@ -62,7 +62,9 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
         $envVars = [];
 
         foreach ($groupedRelationships as $scheme => $relationshipsByKey) {
-            $isPGSQL = str_starts_with($scheme, 'pgsql');
+            $isPGSQL = str_starts_with($scheme, 'pgsql')
+                || str_starts_with($scheme, 'postgresql')
+                || str_starts_with($scheme, 'postgres');
             $isMySQL = str_starts_with($scheme, 'mysql');
             if (!$isPGSQL && !$isMySQL) {
                 continue;
@@ -72,52 +74,8 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
 
             foreach ($relationshipsByKey as $key => $endpoints) {
                 $key = strtoupper($key);
-
-                foreach (array_values($endpoints) as $i => $endpoint) {
-                    $prefix = $this->buildPrefix($key, $i);
-
-                    $username = $endpoint['username'] ?? '';
-                    $password = $endpoint['password'] ?? '';
-                    $host = $endpoint['host'] ?? '';
-                    $port = $endpoint['port'] ?? 0;
-                    $path = $endpoint['path'] ?? 'main';
-
-                    $url = sprintf('%s://', $normalizedScheme);
-                    if ($username !== '') {
-                        $url .= rawurlencode($username);
-                        if ($password !== '') {
-                            $url .= ':' . rawurlencode($password);
-                        }
-                        $url .= '@';
-                    }
-                    $url .= sprintf('%s:%s/%s?sslmode=disable', $host, $port, $path);
-
-                    $charset = $isMySQL ? self::MYSQL_DEFAULT_DATABASE_CHARSET : self::PGSQL_DEFAULT_DATABASE_CHARSET;
-                    $url .= '&charset=' . $charset;
-
-                    $type = $endpoint['type'] ?? null;
-                    if ($type !== null && str_contains((string) $type, ':')) {
-                        [, $version] = explode(':', (string) $type, 2);
-
-                        if ($isMySQL) {
-                            $minor = $version === '10.2' ? 7 : 0;
-                            $version = "{$version}.{$minor}-MariaDB";
-                        }
-
-                        $url .= '&serverVersion=' . $version;
-                    }
-
-                    $envVars["{$prefix}URL"] = $url;
-                    $envVars["{$prefix}USER"] = $username;
-                    $envVars["{$prefix}USERNAME"] = $username;
-                    $envVars["{$prefix}PASSWORD"] = $password;
-                    $envVars["{$prefix}HOST"] = $host;
-                    $envVars["{$prefix}PORT"] = (string) $port;
-                    $envVars["{$prefix}NAME"] = $path;
-                    $envVars["{$prefix}DATABASE"] = $path;
-                    $envVars["{$prefix}DRIVER"] = $normalizedScheme;
-                    $envVars["{$prefix}SERVER"] = sprintf('%s://%s:%s', $normalizedScheme, $host, $port);
-                }
+                $endpointEnvVars = $this->buildDatabaseEndpointEnvVars($endpoints, $key, $normalizedScheme, $isMySQL);
+                $envVars = array_merge($envVars, $endpointEnvVars);
             }
         }
 
@@ -140,7 +98,7 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
         }
 
         $envVars = [
-            $this->envKey('dfs_nfs_path') => $dfsPath,
+            $this->getEnvKey('dfs_nfs_path') => $dfsPath,
         ];
 
         // Look for 'dfs_database' relationship within mysql/pgsql schemes to determine driver and charset
@@ -148,16 +106,18 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
 
         if ($dfsEndpoint !== null) {
             $scheme = (string) ($dfsEndpoint['scheme'] ?? '');
-            $isPgsql = str_starts_with($scheme, 'pgsql');
+            $isPgsql = str_starts_with($scheme, 'pgsql')
+                || str_starts_with($scheme, 'postgresql')
+                || str_starts_with($scheme, 'postgres');
 
-            $envVars[$this->envKey('dfs_database_driver')] = $this->normalizePdoDriver($scheme);
-            $envVars[$this->envKey('dfs_database_charset')] = $isPgsql
+            $envVars[$this->getEnvKey('dfs_database_driver')] = $this->normalizePdoDriver($scheme);
+            $envVars[$this->getEnvKey('dfs_database_charset')] = $isPgsql
                 ? self::PGSQL_DEFAULT_DATABASE_CHARSET
                 : self::MYSQL_DEFAULT_DATABASE_CHARSET;
 
             // Collation is MySQL-specific, PostgreSQL doesn't use it
             if (!$isPgsql) {
-                $envVars[$this->envKey('dfs_database_collation')] = self::DEFAULT_DATABASE_COLLATION;
+                $envVars[$this->getEnvKey('dfs_database_collation')] = self::DEFAULT_DATABASE_COLLATION;
             }
         }
 
@@ -172,7 +132,12 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
     private function findDfsEndpoint(array $groupedRelationships): ?array
     {
         foreach ($groupedRelationships as $scheme => $relationshipsByKey) {
-            if (!str_starts_with($scheme, 'mysql') && !str_starts_with($scheme, 'pgsql')) {
+            if (
+                !str_starts_with($scheme, 'mysql')
+                && !str_starts_with($scheme, 'pgsql')
+                && !str_starts_with($scheme, 'postgresql')
+                && !str_starts_with($scheme, 'postgres')
+            ) {
                 continue;
             }
 
@@ -221,8 +186,8 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
                     $envVars["{$prefix}SCHEME"] = 'redis';
 
                     if (!$cachePoolSet) {
-                        $envVars[$this->envKey('cache_pool')] = 'cache.redis';
-                        $envVars[$this->envKey('cache_dsn')] = sprintf(
+                        $envVars[$this->getEnvKey('cache_pool')] = 'cache.redis';
+                        $envVars[$this->getEnvKey('cache_dsn')] = sprintf(
                             '%s:%d?retry_interval=3',
                             $host,
                             $port,
@@ -254,8 +219,8 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
                             'Usage of Memcached is deprecated, redis is recommended',
                         );
 
-                        $envVars[$this->envKey('cache_pool')] = 'cache.memcached';
-                        $envVars[$this->envKey('cache_dsn')] = sprintf('%s:%d', $host, $port);
+                        $envVars[$this->getEnvKey('cache_pool')] = 'cache.memcached';
+                        $envVars[$this->getEnvKey('cache_dsn')] = sprintf('%s:%d', $host, $port);
                         $cachePoolSet = true;
                     }
                 }
@@ -289,8 +254,8 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
                 }
 
                 return [
-                    $this->envKey('session_handler_id') => NativeSessionHandler::class,
-                    $this->envKey('session_save_path') => sprintf('%s:%d', $endpoint['host'], $endpoint['port']),
+                    $this->getEnvKey('session_handler_id') => NativeSessionHandler::class,
+                    $this->getEnvKey('session_save_path') => sprintf('%s:%d', $endpoint['host'], $endpoint['port']),
                 ];
             }
         }
@@ -304,8 +269,8 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
             foreach ($groupedRelationships[$scheme] as $endpoints) {
                 foreach ($endpoints as $endpoint) {
                     return [
-                        $this->envKey('session_handler_id') => NativeSessionHandler::class,
-                        $this->envKey('session_save_path') => sprintf('%s:%d', $endpoint['host'], $endpoint['port']),
+                        $this->getEnvKey('session_handler_id') => NativeSessionHandler::class,
+                        $this->getEnvKey('session_save_path') => sprintf('%s:%d', $endpoint['host'], $endpoint['port']),
                     ];
                 }
             }
@@ -328,69 +293,8 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
 
         foreach ($relationships as $key => $endpoints) {
             $upperKey = strtoupper($key);
-
-            foreach (array_values($endpoints) as $i => $endpoint) {
-                $scheme = $endpoint['scheme'] ?? null;
-                $rel = $endpoint['rel'] ?? null;
-
-                // Handle Solr (by scheme)
-                if ($scheme === 'solr') {
-                    $prefix = $this->buildPrefix($upperKey, $i);
-
-                    $host = $endpoint['host'] ?? '';
-                    $port = $endpoint['port'] ?? 0;
-                    $path = $endpoint['path'] ?? '';
-
-                    $envVars[$this->envKey('search_engine')] = 'solr';
-                    $envVars[$this->envKey('solr_dsn')] = sprintf(
-                        'http://%s:%d/%s',
-                        $host,
-                        $port,
-                        'solr'
-                    );
-                    $envVars[$this->envKey('solr_core')] = basename($path);
-
-                    $envVars["{$prefix}HOST"] = $host;
-                    $envVars["{$prefix}PORT"] = (string) $port;
-                    $envVars["{$prefix}NAME"] = $path;
-                    $envVars["{$prefix}DATABASE"] = $path;
-                }
-
-                // Handle Elasticsearch (by 'rel' field)
-                if ($rel === 'elasticsearch') {
-                    $prefix = $this->buildPrefix($upperKey, $i);
-
-                    $host = $endpoint['host'] ?? '';
-                    $port = $endpoint['port'] ?? 0;
-                    $scheme = $endpoint['scheme'] ?? 'http';
-                    $path = $endpoint['path'] ?? null;
-
-                    $dsn = sprintf('%s:%d', $host, $port);
-
-                    if (($endpoint['username'] ?? null) !== null && ($endpoint['password'] ?? null) !== null) {
-                        $dsn = rawurlencode($endpoint['username']) . ':' . rawurlencode($endpoint['password']) . '@' . $dsn;
-                    }
-
-                    if ($path !== null) {
-                        $dsn .= '/' . ltrim((string) $path, '/');
-                    }
-
-                    $url = $scheme . '://' . $host . ':' . $port;
-                    if ($path !== null && $path !== '') {
-                        $url .= $path;
-                    }
-
-                    $dsn = $scheme . '://' . $dsn;
-
-                    $envVars[$this->envKey('search_engine')] = 'elasticsearch';
-                    $envVars[$this->envKey('elasticsearch_dsn')] = $dsn;
-
-                    $envVars["{$prefix}URL"] = $url;
-                    $envVars["{$prefix}HOST"] = $host;
-                    $envVars["{$prefix}PORT"] = (string) $port;
-                    $envVars["{$prefix}SCHEME"] = $scheme;
-                }
-            }
+            $endpointEnvVars = $this->buildSearchEndpointEnvVars($endpoints, $upperKey);
+            $envVars = array_merge($envVars, $endpointEnvVars);
         }
 
         return $envVars;
@@ -432,11 +336,11 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
                 }
             }
 
-            $envVars[$this->envKey('httpcache_purge_type')] = 'varnish';
-            $envVars[$this->envKey('httpcache_purge_server')] = $purgeServer;
+            $envVars[$this->getEnvKey('httpcache_purge_type')] = 'varnish';
+            $envVars[$this->getEnvKey('httpcache_purge_server')] = $purgeServer;
         }
 
-        $envVars[$this->envKey('httpcache_varnish_invalidate_token')] =
+        $envVars[$this->getEnvKey('httpcache_varnish_invalidate_token')] =
             ($_SERVER['HTTPCACHE_VARNISH_INVALIDATE_TOKEN'] ?? '') !== ''
                 ? $_SERVER['HTTPCACHE_VARNISH_INVALIDATE_TOKEN']
                 : ($_SERVER['PLATFORM_PROJECT_ENTROPY'] ?? '');
@@ -511,7 +415,7 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
         return str_starts_with($scheme, 'pdo_') ? $scheme : 'pdo_' . $scheme;
     }
 
-    private function envKey(string $parameterName): string
+    private function getEnvKey(string $parameterName): string
     {
         return strtoupper(str_replace(['.', '-'], '_', $parameterName));
     }
@@ -529,5 +433,178 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
     private function isVarnishRoute(array $route): bool
     {
         return ($route['type'] ?? null) === 'upstream' && ($route['upstream'] ?? null) === 'varnish';
+    }
+
+    /**
+     * @param array<array<string, mixed>> $endpoints
+     *
+     * @return array<string, string>
+     */
+    private function buildDatabaseEndpointEnvVars(
+        array $endpoints,
+        string $key,
+        string $normalizedScheme,
+        bool $isMySQL,
+    ): array {
+        $envVars = [];
+
+        foreach (array_values($endpoints) as $i => $endpoint) {
+            $prefix = $this->buildPrefix($key, $i);
+
+            $username = $endpoint['username'] ?? '';
+            $password = $endpoint['password'] ?? '';
+            $host = $endpoint['host'] ?? '';
+            $port = $endpoint['port'] ?? 0;
+            $path = $endpoint['path'] ?? 'main';
+
+            $url = $this->buildDatabaseUrl($normalizedScheme, $username, $password, $host, $port, $path, $isMySQL, $endpoint);
+
+            $envVars["{$prefix}URL"] = $url;
+            $envVars["{$prefix}USER"] = $username;
+            $envVars["{$prefix}USERNAME"] = $username;
+            $envVars["{$prefix}PASSWORD"] = $password;
+            $envVars["{$prefix}HOST"] = $host;
+            $envVars["{$prefix}PORT"] = (string) $port;
+            $envVars["{$prefix}NAME"] = $path;
+            $envVars["{$prefix}DATABASE"] = $path;
+            $envVars["{$prefix}DRIVER"] = $normalizedScheme;
+            $envVars["{$prefix}SERVER"] = sprintf('%s://%s:%s', $normalizedScheme, $host, $port);
+        }
+
+        return $envVars;
+    }
+
+    /**
+     * @param array<string, mixed> $endpoint
+     */
+    private function buildDatabaseUrl(
+        string $normalizedScheme,
+        string $username,
+        string $password,
+        string $host,
+        int $port,
+        string $path,
+        bool $isMySQL,
+        array $endpoint,
+    ): string {
+        $url = sprintf('%s://', $normalizedScheme);
+        if ($username !== '') {
+            $url .= rawurlencode($username);
+            if ($password !== '') {
+                $url .= ':' . rawurlencode($password);
+            }
+            $url .= '@';
+        }
+        $url .= sprintf('%s:%s/%s?sslmode=disable', $host, $port, $path);
+
+        $charset = $isMySQL ? self::MYSQL_DEFAULT_DATABASE_CHARSET : self::PGSQL_DEFAULT_DATABASE_CHARSET;
+        $url .= '&charset=' . $charset;
+
+        $type = $endpoint['type'] ?? null;
+        if ($type !== null && str_contains((string) $type, ':')) {
+            [, $version] = explode(':', (string) $type, 2);
+
+            if ($isMySQL) {
+                $minor = $version === '10.2' ? 7 : 0;
+                $version = "{$version}.{$minor}-MariaDB";
+            }
+
+            $url .= '&serverVersion=' . $version;
+        }
+
+        return $url;
+    }
+
+    /**
+     * @param array<array<string, mixed>> $endpoints
+     *
+     * @return array<string, string>
+     */
+    private function buildSearchEndpointEnvVars(
+        array $endpoints,
+        string $upperKey,
+    ): array {
+        $envVars = [];
+
+        foreach (array_values($endpoints) as $i => $endpoint) {
+            $scheme = $endpoint['scheme'] ?? null;
+            $rel = $endpoint['rel'] ?? null;
+            $prefix = $this->buildPrefix($upperKey, $i);
+
+            if ($scheme === 'solr') {
+                $envVars = array_merge($envVars, $this->buildSolrEnvVars($endpoint, $prefix));
+            }
+
+            if ($rel === 'elasticsearch') {
+                $envVars = array_merge($envVars, $this->buildElasticsearchEnvVars($endpoint, $prefix));
+            }
+        }
+
+        return $envVars;
+    }
+
+    /**
+     * @param array<string, mixed> $endpoint
+     *
+     * @return array<string, string>
+     */
+    private function buildSolrEnvVars(
+        array $endpoint,
+        string $prefix,
+    ): array {
+        $host = $endpoint['host'] ?? '';
+        $port = $endpoint['port'] ?? 0;
+        $path = $endpoint['path'] ?? '';
+
+        return [
+            $this->getEnvKey('search_engine') => 'solr',
+            $this->getEnvKey('solr_dsn') => sprintf('http://%s:%d/%s', $host, $port, 'solr'),
+            $this->getEnvKey('solr_core') => basename($path),
+            "{$prefix}HOST" => $host,
+            "{$prefix}PORT" => (string) $port,
+            "{$prefix}NAME" => $path,
+            "{$prefix}DATABASE" => $path,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $endpoint
+     *
+     * @return array<string, string>
+     */
+    private function buildElasticsearchEnvVars(
+        array $endpoint,
+        string $prefix,
+    ): array {
+        $host = $endpoint['host'] ?? '';
+        $port = $endpoint['port'] ?? 0;
+        $scheme = $endpoint['scheme'] ?? 'http';
+        $path = $endpoint['path'] ?? null;
+
+        $dsn = sprintf('%s:%d', $host, $port);
+
+        if (($endpoint['username'] ?? null) !== null && ($endpoint['password'] ?? null) !== null) {
+            $dsn = rawurlencode($endpoint['username']) . ':' . rawurlencode($endpoint['password']) . '@' . $dsn;
+        }
+
+        if ($path !== null) {
+            $dsn .= '/' . ltrim((string) $path, '/');
+        }
+
+        $url = $scheme . '://' . $host . ':' . $port;
+        if ($path !== null && $path !== '') {
+            $url .= $path;
+        }
+
+        $dsn = $scheme . '://' . $dsn;
+
+        return [
+            $this->getEnvKey('search_engine') => 'elasticsearch',
+            $this->getEnvKey('elasticsearch_dsn') => $dsn,
+            "{$prefix}URL" => $url,
+            "{$prefix}HOST" => $host,
+            "{$prefix}PORT" => (string) $port,
+            "{$prefix}SCHEME" => $scheme,
+        ];
     }
 }
