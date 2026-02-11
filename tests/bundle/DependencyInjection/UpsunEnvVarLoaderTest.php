@@ -386,6 +386,41 @@ final class UpsunEnvVarLoaderTest extends TestCase
             $serverValues + ['PLATFORMSH_DFS_NFS_PATH' => '/mnt/dfs/nfs'],
         ];
 
+        yield 'dfs with postgresql' => [
+            [
+                'dfs_database' => [
+                    [
+                        'host' => 'dfs_database.internal',
+                        'scheme' => 'pgsql',
+                        'username' => 'dfs',
+                        'password' => 'dfs',
+                        'port' => 5432,
+                        'path' => 'dfs',
+                        'query' => ['is_master' => true],
+                    ],
+                ],
+            ],
+            $routes,
+            [
+                'DFS_DATABASE_URL' => 'postgres://dfs:dfs@dfs_database.internal:5432/dfs?sslmode=disable&charset=utf8',
+                'DFS_DATABASE_USER' => 'dfs',
+                'DFS_DATABASE_USERNAME' => 'dfs',
+                'DFS_DATABASE_PASSWORD' => 'dfs',
+                'DFS_DATABASE_HOST' => 'dfs_database.internal',
+                'DFS_DATABASE_PORT' => '5432',
+                'DFS_DATABASE_NAME' => 'dfs',
+                'DFS_DATABASE_DATABASE' => 'dfs',
+                'DFS_DATABASE_DRIVER' => 'pdo_pgsql',
+                'DFS_DATABASE_SERVER' => 'postgres://dfs_database.internal:5432',
+                'DFS_NFS_PATH' => '/mnt/dfs/nfs',
+                'DFS_DATABASE_CHARSET' => 'utf8',
+                'DFS_DATABASE_COLLATION' => '',
+                'HTTPCACHE_VARNISH_INVALIDATE_TOKEN' => 'project_entropy',
+                'APP_SECRET' => 'project_entropy',
+            ],
+            $serverValues + ['PLATFORMSH_DFS_NFS_PATH' => '/mnt/dfs/nfs'],
+        ];
+
         yield 'postgresql without version' => [
             [
                 'pg_main' => [
@@ -598,6 +633,9 @@ final class UpsunEnvVarLoaderTest extends TestCase
             $routes,
             [
                 'CACHE_DB_URL' => 'mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.1.0-MariaDB',
+                'CACHE_DB_USER' => '',
+                'CACHE_DB_USERNAME' => '',
+                'CACHE_DB_PASSWORD' => '',
                 'CACHE_DB_HOST' => 'database.internal',
                 'CACHE_DB_PORT' => '3306',
                 'CACHE_DB_NAME' => 'main',
@@ -625,6 +663,9 @@ final class UpsunEnvVarLoaderTest extends TestCase
             $routes,
             [
                 'CMS_DATABASE_URL' => 'mysql://database.internal:3306/main?sslmode=disable&charset=utf8mb4&serverVersion=10.2.7-MariaDB',
+                'CMS_DATABASE_USER' => '',
+                'CMS_DATABASE_USERNAME' => '',
+                'CMS_DATABASE_PASSWORD' => '',
                 'CMS_DATABASE_HOST' => 'database.internal',
                 'CMS_DATABASE_PORT' => '3306',
                 'CMS_DATABASE_NAME' => 'main',

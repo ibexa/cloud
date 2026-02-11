@@ -48,7 +48,7 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
                 $this->buildVarnishEnvVars($routes),
                 $this->buildAppSecretEnvVars(),
             ),
-            static fn (string|int|null $value): bool => $value !== null && $value !== ''
+            static fn (string|int|null $value): bool => $value !== null
         );
     }
 
@@ -115,10 +115,9 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
                 ? self::PGSQL_DEFAULT_DATABASE_CHARSET
                 : self::MYSQL_DEFAULT_DATABASE_CHARSET;
 
-            // Collation is MySQL-specific, PostgreSQL doesn't use it
-            if (!$isPgsql) {
-                $envVars[$this->getEnvKey('dfs_database_collation')] = self::DEFAULT_DATABASE_COLLATION;
-            }
+            $envVars[$this->getEnvKey('dfs_database_collation')] = $isPgsql
+                ? ''
+                : self::DEFAULT_DATABASE_COLLATION;
         }
 
         return $envVars;
