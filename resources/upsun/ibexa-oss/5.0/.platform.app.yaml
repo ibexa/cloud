@@ -29,6 +29,8 @@ build:
 # side is in the form `<service name>:<endpoint name>`.
 relationships:
     database: 'mysqldb:user'
+    # PostgreSQL example
+    # pgdatabase: 'postgresqldb:main'
     # Uncomment if you want to store dfs tables in a separate database:
     #dfs_database: 'mysqldb:dfs'
     rediscache: 'rediscache:redis'

@@ -22,7 +22,7 @@ mysqldb:
             #    privileges:
             #        dfs: admin
 
-# Postgres example
+# PostgreSQL example
 #postgresqldb:
 #    type: postgresql:18
 #    disk: 1024
@@ -30,8 +30,8 @@ mysqldb:
 #        databases:
 #            - main
 #        endpoints:
-#            default_database: main
-#            admin:
+#            main:
+#                default_database: main
 #                privileges:
 #                    main: admin
 
