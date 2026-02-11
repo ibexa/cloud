@@ -22,6 +22,19 @@ mysqldb:
             #    privileges:
             #        dfs: admin
 
+# Postgres example
+#postgresqldb:
+#    type: postgresql:18
+#    disk: 1024
+#    configuration:
+#        databases:
+#            - main
+#        endpoints:
+#            default_database: main
+#            admin:
+#                privileges:
+#                    main: admin
+
 # For use by Symfony Cache (used by Ibexa DXP SPI Persistence Cache)
 rediscache:
     type: 'redis:7.2'
