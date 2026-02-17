@@ -118,7 +118,7 @@ mounts:
     'var/log':
         source: local
         source_path: log
-    # [PE Cluster] For cluster it's recommended to rather use a performant shared session storage like Redis/Memcached.
+    # [PE Cluster] For cluster it's recommended to rather use a performant shared session storage like Redis.
     'var/sessions':
         source: local
         source_path: sessions

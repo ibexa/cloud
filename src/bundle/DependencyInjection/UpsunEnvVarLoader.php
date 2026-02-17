@@ -164,7 +164,6 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
         $envVars = [];
         $cachePoolSet = false;
 
-        // Process Redis/Valkey first (always preferred over memcached)
         foreach (['redis', 'valkey'] as $scheme) {
             if (!isset($groupedRelationships[$scheme])) {
                 continue;
@@ -191,35 +190,6 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
                             $host,
                             $port,
                         );
-                        $cachePoolSet = true;
-                    }
-                }
-            }
-        }
-
-        // Process Memcached (fallback, only sets cache_pool if redis wasn't found)
-        if (isset($groupedRelationships['memcached'])) {
-            foreach ($groupedRelationships['memcached'] as $key => $endpoints) {
-                $key = strtoupper($key);
-
-                foreach (array_values($endpoints) as $i => $endpoint) {
-                    $prefix = $this->buildPrefix($key, $i);
-
-                    $host = $endpoint['host'] ?? '';
-                    $port = $endpoint['port'] ?? 0;
-
-                    $envVars["{$prefix}HOST"] = $host;
-                    $envVars["{$prefix}PORT"] = (string) $port;
-
-                    if (!$cachePoolSet) {
-                        trigger_deprecation(
-                            'ibexa/cloud',
-                            '5.0.5',
-                            'Usage of Memcached is deprecated, redis is recommended',
-                        );
-
-                        $envVars[$this->getEnvKey('cache_pool')] = 'cache.memcached';
-                        $envVars[$this->getEnvKey('cache_dsn')] = sprintf('%s:%d', $host, $port);
                         $cachePoolSet = true;
                     }
                 }

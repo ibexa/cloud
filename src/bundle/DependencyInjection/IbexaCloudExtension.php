@@ -103,21 +103,12 @@ final class IbexaCloudExtension extends Extension implements PrependExtensionInt
             return;
         }
 
-        $cacheType = $envVars['CACHE_POOL'];
-        $configFile = match ($cacheType) {
-            'cache.redis' => 'cache.redis.yaml',
-            'cache.memcached' => 'cache.memcached.yaml',
-            default => null,
-        };
-
-        if ($configFile === null) {
-            return;
+        if ($envVars['CACHE_POOL'] === 'cache.redis') {
+            $loader = new YamlFileLoader(
+                $container,
+                new FileLocator($projectDir . '/config/packages/cache_pool')
+            );
+            $loader->load('cache.redis.yaml');
         }
-
-        $loader = new YamlFileLoader(
-            $container,
-            new FileLocator($projectDir . '/config/packages/cache_pool')
-        );
-        $loader->load($configFile);
     }
 }
