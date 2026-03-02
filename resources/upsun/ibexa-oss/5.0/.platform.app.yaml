@@ -29,6 +29,8 @@ build:
 # side is in the form `<service name>:<endpoint name>`.
 relationships:
     database: 'mysqldb:user'
+    # PostgreSQL example
+    # pgdatabase: 'postgresqldb:main'
     # Uncomment if you want to store dfs tables in a separate database:
     #dfs_database: 'mysqldb:dfs'
     rediscache: 'rediscache:redis'
@@ -116,7 +118,7 @@ mounts:
     'var/log':
         source: local
         source_path: log
-    # [PE Cluster] For cluster it's recommended to rather use a performant shared session storage like Redis/Memcached.
+    # [PE Cluster] For cluster it's recommended to rather use a performant shared session storage like Redis.
     'var/sessions':
         source: local
         source_path: sessions

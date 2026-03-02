@@ -36,6 +36,7 @@ final class IbexaCloudExtension extends Extension implements PrependExtensionInt
 
     public function prepend(ContainerBuilder $container): void
     {
+        $this->configureUpsunSetup($container);
         $this->prependDefaultConfiguration($container);
         $this->prependJMSTranslation($container);
     }
@@ -72,5 +73,42 @@ final class IbexaCloudExtension extends Extension implements PrependExtensionInt
     {
         return $container->hasParameter('ibexa.behat.browser.enabled')
             && true === $container->getParameter('ibexa.behat.browser.enabled');
+    }
+
+    private function configureUpsunSetup(ContainerBuilder $container): void
+    {
+        $envVars = (new UpsunEnvVarLoader())->loadEnvVars();
+
+        if (($_SERVER['HTTPCACHE_PURGE_TYPE'] ?? $_ENV['HTTPCACHE_PURGE_TYPE'] ?? null) === 'varnish') {
+            $container->setParameter('ibexa.http_cache.purge_type', 'varnish');
+        }
+
+        // Cannot be placed as env var due to how LiipImagineBundle processes its config
+        if (\extension_loaded('imagick')) {
+            $container->setParameter('liip_imagine_driver', 'imagick');
+        }
+
+        $projectDir = $container->getParameter('kernel.project_dir');
+        assert(is_string($projectDir));
+
+        if (isset($envVars['DFS_NFS_PATH'])) {
+            $loader = new YamlFileLoader(
+                $container,
+                new FileLocator($projectDir . '/config/packages/dfs')
+            );
+            $loader->load('dfs.yaml');
+        }
+
+        if (!isset($envVars['CACHE_POOL'])) {
+            return;
+        }
+
+        if ($envVars['CACHE_POOL'] === 'cache.redis') {
+            $loader = new YamlFileLoader(
+                $container,
+                new FileLocator($projectDir . '/config/packages/cache_pool')
+            );
+            $loader->load('cache.redis.yaml');
+        }
     }
 }
