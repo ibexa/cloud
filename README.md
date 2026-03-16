@@ -1,4 +1,4 @@
-# cloud
+# ibexa/cloud
 
 This package is part of [Ibexa DXP](https://ibexa.co).
 
