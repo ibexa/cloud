@@ -426,7 +426,7 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
             $port = $endpoint['port'] ?? 0;
             $path = $endpoint['path'] ?? 'main';
 
-            $url = $this->buildDatabaseUrl($normalizedScheme, $username, $password, $host, $port, $path, $isMySQL, $endpoint);
+            $url = $this->buildDatabaseUrl($normalizedScheme, $username, $password, $host, (int) $port, $path, $isMySQL, $endpoint);
 
             $envVars["{$prefix}URL"] = $url;
             $envVars["{$prefix}USER"] = $username;
