@@ -227,6 +227,12 @@ crons:
         spec: "0 0 * * 0"
         cmd: "php bin/console ibexa:check-urls --quiet"
 
+workers:
+    messenger:
+        disk: 256
+        commands:
+            start: php bin/console messenger:consume ibexa.messenger.transport --bus=ibexa.messenger.bus --limit=100 --time-limit=60 --memory-limit=256M
+
 runtime:
     extensions:
         - xsl
