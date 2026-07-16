@@ -117,6 +117,12 @@ mounts:
     'var/cache':
         source: local
         source_path: cache
+    # Symfony 7.4+ share dir (APP_SHARE_DIR): cache.app pool writes to var/share/<env>/pools/app,
+    # so it must be writable at runtime. Without this mount all cache.app writes fail silently
+    # (read-only filesystem), which breaks e.g. MCP sessions (bodiless 202 responses).
+    'var/share':
+        source: local
+        source_path: share
     'var/log':
         source: local
         source_path: log
