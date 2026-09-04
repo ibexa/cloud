@@ -1,0 +1,10 @@
+name: Rector PHP
+on:
+    push:
+        branches:
+            - '[0-9]+.[0-9]+'
+    pull_request: ~
+jobs:
+    rector:
+        name: Run rector
+        uses: ibexa/gh-workflows/.github/workflows/rector.yml@main
