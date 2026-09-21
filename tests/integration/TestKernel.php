@@ -8,19 +8,11 @@ declare(strict_types=1);
 
 namespace Ibexa\Tests\Integration\Cloud;
 
+use Ibexa\Bundle\Test\Core\IbexaTestCoreBundle;
 use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 
 final class TestKernel extends IbexaTestKernel
 {
-    public function getSchemaFiles(): iterable
-    {
-        yield from parent::getSchemaFiles();
-
-        yield from [
-            $this->locateResource('@IbexaCoreBundle/Resources/config/storage/legacy/schema.yaml'),
-        ];
-    }
-
     public function getFixtures(): iterable
     {
         yield from parent::getFixtures();
@@ -29,6 +21,8 @@ final class TestKernel extends IbexaTestKernel
     public function registerBundles(): iterable
     {
         yield from parent::registerBundles();
+
+        yield new IbexaTestCoreBundle();
     }
 
     protected static function getExposedServicesByClass(): iterable
