@@ -10,11 +10,11 @@ namespace Ibexa\Tests\Bundle\Cloud\DependencyInjection;
 
 use Ibexa\Bundle\Cloud\DependencyInjection\UpsunEnvVarLoader;
 use Ibexa\Bundle\Core\Session\Handler\NativeSessionHandler;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Ibexa\Bundle\Cloud\DependencyInjection\UpsunEnvVarLoader
- */
+#[CoversClass(UpsunEnvVarLoader::class)]
 final class UpsunEnvVarLoaderTest extends TestCase
 {
     /** @var array<string, mixed> */
@@ -39,9 +39,8 @@ final class UpsunEnvVarLoaderTest extends TestCase
      * @param array<string, array<string, mixed>> $routes
      * @param array<string, string> $expectedEnv
      * @param array<string, mixed> $serverValues
-     *
-     * @dataProvider providerForTestLoadEnvVars
      */
+    #[DataProvider('providerForTestLoadEnvVars')]
     public function testLoadEnvVars(
         array $relationships,
         array $routes,
@@ -74,9 +73,9 @@ final class UpsunEnvVarLoaderTest extends TestCase
      *     }
      * >
      */
-    public function providerForTestLoadEnvVars(): iterable
+    public static function providerForTestLoadEnvVars(): iterable
     {
-        $routes = $this->createRoutes();
+        $routes = self::createRoutes();
         $serverValues = ['PLATFORM_PROJECT_ENTROPY' => 'project_entropy'];
 
         yield 'redis cache with session fallback and elasticsearch' => [
@@ -758,7 +757,7 @@ final class UpsunEnvVarLoaderTest extends TestCase
      *     }
      * >
      */
-    private function createRoutes(): array
+    private static function createRoutes(): array
     {
         return [
             'http://app.example.com/' => [
