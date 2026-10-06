@@ -14,7 +14,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.3",
+        "php": ">=8.5",
         "composer/semver": "^3.4",
         "ibexa/core": "~6.0.x-dev",
         "symfony/config": "^8.1",
