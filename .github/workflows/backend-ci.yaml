@@ -79,3 +79,12 @@ jobs:
                 env:
                     IMAGE: ibexa-varnishtest:6.0
                 run: tests/varnish/run.sh
+
+            -   name: Build Varnish 9 varnishtest image
+                run: docker build -t ibexa-varnishtest:9 -f tests/varnish/Dockerfile-9 tests/varnish
+
+            -   name: Run varnishtest suite against varnish9.vcl
+                env:
+                    IMAGE: ibexa-varnishtest:9
+                    VCL: resources/upsun/common/5.0/.platform/varnish9.vcl
+                run: tests/varnish/run.sh
