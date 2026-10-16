@@ -10,6 +10,9 @@
 # Usage:
 #   docker build -t ibexa-varnishtest:7 tests/varnish
 #   IMAGE=ibexa-varnishtest:7 tests/varnish/run.sh
+#
+#   docker build -t ibexa-varnishtest:9 -f tests/varnish/Dockerfile-9 tests/varnish
+#   IMAGE=ibexa-varnishtest:9 VCL=resources/upsun/common/5.0/.platform/varnish9.vcl tests/varnish/run.sh
 
 set -euo pipefail
 
