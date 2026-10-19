@@ -15,46 +15,27 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 final class TrustedHeaderClientIpEventSubscriber implements EventSubscriberInterface
 {
-    private const string PLATFORM_SH_TRUSTED_HEADER_CLIENT_IP = 'X-Client-IP';
-
-    public function __construct(
-        private readonly ?string $trustedHeaderName
-    ) {}
-
     public static function getSubscribedEvents(): array
     {
         return [
-            KernelEvents::REQUEST => ['onKernelRequest', PHP_INT_MAX - 1],
+            KernelEvents::REQUEST => ['onKernelRequest', PHP_INT_MAX],
         ];
     }
 
     public function onKernelRequest(RequestEvent $event): void
     {
         $request = $event->getRequest();
-
-        $trustedProxies = Request::getTrustedProxies();
         $trustedHeaderSet = Request::getTrustedHeaderSet();
 
-        $trustedHeaderName = $this->trustedHeaderName;
-        if (null === $trustedHeaderName && $this->isUpsunProxy($request)) {
-            $trustedHeaderName = self::PLATFORM_SH_TRUSTED_HEADER_CLIENT_IP;
-        }
-
-        if (null === $trustedHeaderName) {
+        // -1 means framework.trusted_proxies is not configured; passing it on would trust every forwarded header
+        if ($trustedHeaderSet === -1) {
             return;
         }
 
-        $trustedClientIp = $request->headers->get($trustedHeaderName);
-
-        if (null !== $trustedClientIp) {
-            if ($trustedHeaderSet !== -1) {
-                $trustedHeaderSet |= Request::HEADER_X_FORWARDED_FOR;
-            }
-            $request->headers->set('X_FORWARDED_FOR', $trustedClientIp);
+        if ($this->isUpsunProxy($request) && $request->headers->get('Client-Cdn') === 'fastly') {
+            /** @var int<0, 63> $trustedHeaderSet */
+            Request::setTrustedProxies(['REMOTE_ADDR'], $trustedHeaderSet);
         }
-
-        /** @var int<0, 63> $trustedHeaderSet */
-        Request::setTrustedProxies($trustedProxies, $trustedHeaderSet);
     }
 
     private function isUpsunProxy(Request $request): bool
