@@ -19,8 +19,7 @@ final class TrustedHeaderClientIpEventSubscriber implements EventSubscriberInter
 
     public function __construct(
         private readonly ?string $trustedHeaderName
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

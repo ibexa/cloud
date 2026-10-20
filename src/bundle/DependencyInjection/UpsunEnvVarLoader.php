@@ -48,7 +48,7 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
                 $this->buildVarnishEnvVars($routes),
                 $this->buildAppSecretEnvVars(),
             ),
-            static fn (string|int|null $value): bool => $value !== null
+            static fn (string | int | null $value): bool => $value !== null
         );
     }
 
@@ -208,8 +208,10 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
      *
      * @return array<string, string>
      */
-    private function buildSessionEnvVars(array $relationships, array $groupedRelationships): array
-    {
+    private function buildSessionEnvVars(
+        array $relationships,
+        array $groupedRelationships
+    ): array {
         // First, try a dedicated 'redissession' or 'valkeysession' relationship
         foreach (['redissession', 'valkeysession'] as $relationshipKey) {
             if (!isset($relationships[$relationshipKey])) {
@@ -389,8 +391,10 @@ final readonly class UpsunEnvVarLoader implements EnvVarLoaderInterface
         return strtoupper(str_replace(['.', '-'], '_', $parameterName));
     }
 
-    private function buildPrefix(string $key, int $index): string
-    {
+    private function buildPrefix(
+        string $key,
+        int $index
+    ): string {
         $prefix = $index === 0 ? "{$key}_" : "{$key}_{$index}_";
 
         return str_replace('-', '_', $prefix);
