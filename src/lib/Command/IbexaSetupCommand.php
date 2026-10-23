@@ -31,7 +31,7 @@ final class IbexaSetupCommand
     private const string UPSUN_RESOURCES_PATH = __DIR__ . '/../../../resources/upsun';
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function __invoke(
         SymfonyStyle $io,
@@ -102,7 +102,7 @@ final class IbexaSetupCommand
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     private function getCommonFiles(string $product): Finder
     {
@@ -121,7 +121,7 @@ final class IbexaSetupCommand
     /**
      * @return array<string, SplFileInfo>
      *
-     * @throws \Exception
+     * @throws Exception
      */
     private function getProductSpecificFiles(string $product): array
     {
@@ -163,8 +163,10 @@ final class IbexaSetupCommand
         return $files;
     }
 
-    private function getVersionDirectory(string $product, string $path): string
-    {
+    private function getVersionDirectory(
+        string $product,
+        string $path
+    ): string {
         $finder = new Finder();
         $finder
             ->in($path)
