@@ -13,11 +13,6 @@ use Ibexa\Contracts\Test\Core\IbexaTestKernel;
 
 final class TestKernel extends IbexaTestKernel
 {
-    public function getFixtures(): iterable
-    {
-        yield from parent::getFixtures();
-    }
-
     public function registerBundles(): iterable
     {
         yield from parent::registerBundles();
