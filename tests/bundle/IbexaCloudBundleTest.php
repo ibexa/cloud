@@ -18,11 +18,16 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 final class IbexaCloudBundleTest extends TestCase
 {
+    private const POPULATED_ENV_VARS = ['SESSION_HANDLER_ID', 'SESSION_SAVE_PATH'];
+
     /** @var array<string, mixed> */
     private array $originalServer;
 
     /** @var array<string, mixed> */
     private array $originalEnv;
+
+    /** @var array<string, string|false> */
+    private array $originalProcessEnv;
 
     protected function setUp(): void
     {
@@ -30,6 +35,10 @@ final class IbexaCloudBundleTest extends TestCase
 
         $this->originalServer = $_SERVER;
         $this->originalEnv = $_ENV;
+        $this->originalProcessEnv = [];
+        foreach (self::POPULATED_ENV_VARS as $name) {
+            $this->originalProcessEnv[$name] = getenv($name);
+        }
 
         $_SERVER['PLATFORM_RELATIONSHIPS'] = $this->encode(
             [
@@ -49,6 +58,10 @@ final class IbexaCloudBundleTest extends TestCase
     {
         $_SERVER = $this->originalServer;
         $_ENV = $this->originalEnv;
+
+        foreach ($this->originalProcessEnv as $name => $value) {
+            $value === false ? putenv($name) : putenv($name . '=' . $value);
+        }
 
         parent::tearDown();
     }
@@ -76,7 +89,7 @@ final class IbexaCloudBundleTest extends TestCase
 
     public function testBuildLeavesEnvVarsAloneOutsideUpsun(): void
     {
-        unset($_SERVER['PLATFORM_RELATIONSHIPS'], $_SERVER['PLATFORM_ROUTES']);
+        unset($_SERVER['PLATFORM_RELATIONSHIPS'], $_SERVER['PLATFORM_ROUTES'], $_SERVER['SESSION_SAVE_PATH']);
         $_SERVER['SESSION_HANDLER_ID'] = 'session.handler.native_file';
 
         $bundle = new IbexaCloudBundle();
